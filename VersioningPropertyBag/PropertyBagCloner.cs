@@ -46,9 +46,7 @@ namespace VersionCommander
     {
         public static TCloned TryCloneWithExplicitImplementationUnavailable<TCloned>(TCloned target)
         {
-            // ReSharper disable CompareNonConstrainedGenericWithNull if target is a struct this is false, exactly as we'd want.
-            if (target == null) throw new ArgumentNullException("target");
-            // ReSharper restore CompareNonConstrainedGenericWithNull
+            if (ReferenceEquals(target, null)) throw new ArgumentNullException("target");
 
             var targetAsCloneable = target as ICloneable;
             if (targetAsCloneable != null)

@@ -100,7 +100,7 @@ namespace VersionCommander.Tests
         } 
 
         [Test]
-        public void when_constructing_a_versioning_object_hierarchy_all_hierarchy_members_should_be_aware_of_their_parent_and_children ()
+        public void when_constructing_a_versioning_object_hierarchy_all_hierarchy_members_should_be_aware_of_their_parent_and_children()
         {
             var sample = New.Versioning<DeepPropertyBag>(bag =>
             {
@@ -115,7 +115,7 @@ namespace VersionCommander.Tests
         }
         
         [Test]
-        public void when_rolling_back_properties_of_unversioned_child()
+        public void rolling_back_properties_of_unversioned_child_should_throw()
         {
             var parent = New.Versioning<DeepPropertyBag>(bag =>
                          {
@@ -155,6 +155,7 @@ namespace VersionCommander.Tests
             //user hits cancel after a series of dialogs, must undo all the dialogs
                 //could be done via cloning the object, catching the event and re-assigning the clone.
             //user hits undo
+            //user hits undo multiple times
             //user hits redo...
     }
 }

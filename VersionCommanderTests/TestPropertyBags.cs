@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Reflection;
 using AutoMapper;
 
-namespace VersionCommander
+namespace VersionCommander.Tests
 {
     [DebuggerDisplay("DeepPropertyBag : Stringey = {Stringey}")]
     public class DeepPropertyBag : ICloneable, IEquatable<DeepPropertyBag>, IVersionablePropertyBag

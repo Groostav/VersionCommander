@@ -4,6 +4,7 @@ using System.Linq;
 using FluentAssertions;
 using NUnit.Framework;
 using Castle.DynamicProxy;
+using VersionCommander.Tests;
 
 namespace VersionCommander
 {
