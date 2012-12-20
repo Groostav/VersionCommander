@@ -17,7 +17,7 @@ namespace VersionCommander
 
             var collection = new List<string>();
             var item = "hey!";
-            mementor.ElementAdd(collection, item);//this is an extension method? Oh I see, he didnt want to put with custom-list logic on Mementor. Nice.
+            mementor.ElementAdd(collection, item);//this is an extension method? Oh I see, he didnt want to put custom-list logic on Mementor. Nice.
             //it also doesnt actually add the element to the list:
             collection.Add(item);
             collection.Should().HaveCount(1);
@@ -73,7 +73,7 @@ namespace VersionCommander
 
             subscriber.Address.Should().Be(originalAddress);
             //still, very cool. 
-                //In terms of a desployed 
+                //In terms of a deployed program, this is tough to implement.  
                 //I like the pub-sub design of it, code is superbly clean.
         }
 

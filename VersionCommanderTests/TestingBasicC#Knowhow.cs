@@ -123,7 +123,8 @@ namespace VersionCommander
                 cast.Should().BeNull();
             }
 
-            //so this begs the question: wtf is the default IVersionControlNode? whats the default of any interface?
+            //the default of any interface is null, because interfaces are ref types. They're so ref types, the act of casting something as its interface
+            //converts it to a ref type. Intresting.
             //Can I do equals on the default of an interface that extends IEquatable?
         }
 
@@ -150,6 +151,16 @@ namespace VersionCommander
             clonedViaAutomapper.SpecialChild.Should().BeSameAs(sample.SpecialChild);
             clonedViaAutomapper.ChildBags.First().Should().BeSameAs(firstChild);
         }
+       
+        [Test]
+        public void how_the_bugger_does_array_implement_add()
+        {
+            var array = new string[3];
 
+            var cast = array as ICollection<string>;
+
+            Assert.Throws<NotSupportedException>(() => cast.Add("Wat"));
+            //so that makes sense, this is typical "collection is a fixed size" behavior.
+        }
     }
 }

@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using FakeItEasy;
 using FluentAssertions;
 using Machine.Specifications;
 using NUnit.Framework;
@@ -43,10 +45,27 @@ namespace VersionCommander
     [TestFixture]
     public class IntercetpedPropertyBagVersionControllerFixture
     {
-        //GetVersionOfPropertyAt
         [Test]
-        public void when_asking_for_construction_time_version_of_a_property_should_get_original_value()
+        public void when_using_explicit_setter()
         {
+            //setup
+            var baseObject = new FlatPropertyBag();
+            var versioningFlatBag = new IntercetpedPropertyBagVersionController<FlatPropertyBag>(baseObject,
+                                                                                                 new DefaultCloneFactory<FlatPropertyBag>(),
+                                                                                                 TestHelper.EmptyChangeSet());
+            const string changedValue = "Change!";
+
+            //act
+            versioningFlatBag.Set(baseObject.PropertyInfoFor(x => x.Stringey), changedValue);
+
+            //assert
+            versioningFlatBag.Mutations.Should().ContainSingle(mutation => mutation.Arguments.Single() == changedValue);
+        }
+
+        [Test]
+        public void when_getting_version_from_construction()
+        {
+            //setup
             var baseObject = new FlatPropertyBag();
             var versioningFlatBag = new IntercetpedPropertyBagVersionController<FlatPropertyBag>(baseObject,
                                                                                                  new DefaultCloneFactory<FlatPropertyBag>(),
@@ -54,22 +73,25 @@ namespace VersionCommander
             var constructionTimeStamp = Stopwatch.GetTimestamp();
             var changedValue = "Change!";
 
+            //act
             versioningFlatBag.Set(baseObject.PropertyInfoFor(x => x.Stringey), changedValue);
-
             var original = versioningFlatBag.GetVersionAt(constructionTimeStamp);
+
+            //assert
             original.Should().NotBeNull();
             original.Stringey.Should().Be(null);
         }
 
         [Test]
-        public void when_asking_for_version_of_property_under_deltas_should_retrieve_value_from_correct_delta()
+        public void when_getting_specific_version()
         {
+            //setup
             var baseObject = new FlatPropertyBag();
             var targetSite = baseObject.PropertyInfoFor(x => x.Stringey).GetSetMethod();
             const int targetVersion = 2;
             const string targetVersionValue = "Two!";
 
-            var changeSet = new List<TimestampedPropertyVersionDelta>()
+            var changeSet = new[]
                                 {
                                     new TimestampedPropertyVersionDelta("One",              targetSite,  targetVersion - 1),
                                     new TimestampedPropertyVersionDelta(targetVersionValue, targetSite,  targetVersion),
@@ -80,11 +102,123 @@ namespace VersionCommander
                                                                                                  new DefaultCloneFactory<FlatPropertyBag>(),
                                                                                                  changeSet);
 
-
+            //act
             var retrievedVersion = versioningFlatBag.GetVersionAt(targetVersion).Stringey;
 
-
+            //assert
             retrievedVersion.Should().Be(targetVersionValue);
+        }
+
+        [Test]
+        public void when_rolling_back_to_construction()
+        {
+            //setup
+            var baseObject = new FlatPropertyBag();
+            var targetSite = baseObject.PropertyInfoFor(x => x.Stringey).GetSetMethod();
+            const int targetVersion = 1;
+
+            var changeSet = new[]{ new TimestampedPropertyVersionDelta("One", targetSite,  targetVersion) };
+
+            var versioningFlatBag = new IntercetpedPropertyBagVersionController<FlatPropertyBag>(baseObject,
+                                                                                                 new DefaultCloneFactory<FlatPropertyBag>(),
+                                                                                                 changeSet);
+            //act
+            versioningFlatBag.RollbackTo(targetVersion - 1);
+
+            //assert
+            versioningFlatBag.Get(targetSite.GetParentProperty()).As<string>().Should().Be(null);
+        }
+
+        [Test]
+        public void when_rolling_back_to_specific_version()
+        {
+            //setup
+            var baseObject = new FlatPropertyBag();
+            var targetSite = baseObject.PropertyInfoFor(x => x.Stringey).GetSetMethod();
+            const int targetVersion = 2;
+            const string targetVersionValue = "Two!";
+
+            var changeSet = new[]
+                                {
+                                    new TimestampedPropertyVersionDelta("One",              targetSite,  targetVersion - 1),
+                                    new TimestampedPropertyVersionDelta(targetVersionValue, targetSite,  targetVersion),
+                                    new TimestampedPropertyVersionDelta("Three",            targetSite,  targetVersion + 1)
+                                };
+
+            var versioningFlatBag = new IntercetpedPropertyBagVersionController<FlatPropertyBag>(baseObject,
+                                                                                                 new DefaultCloneFactory<FlatPropertyBag>(),
+                                                                                                 changeSet);
+            //act
+            versioningFlatBag.RollbackTo(targetVersion);
+
+            //assert
+            versioningFlatBag.Get(targetSite.GetParentProperty()).Should().Be(targetVersionValue);
+        }
+
+
+
+        //TODO make this a new class, specifically oriented toward ensuring memory isolation.
+
+
+
+        [Test]
+        public void when_rolling_back_unaltered_object()
+        {
+            //setup
+            var baseObject = new FlatPropertyBag();
+            var stringPropInfo = baseObject.PropertyInfoFor(x => x.Stringey);
+            var countPropInfo = baseObject.PropertyInfoFor(x => x.County);
+            var versioningFlatBag = new IntercetpedPropertyBagVersionController<FlatPropertyBag>(baseObject,
+                                                                                                 new DefaultCloneFactory<FlatPropertyBag>(),
+                                                                                                 TestHelper.EmptyChangeSet());
+            //act
+            versioningFlatBag.RollbackTo(0);
+
+            //assert
+            versioningFlatBag.Get(stringPropInfo).Should().BeNull();
+            versioningFlatBag.Get(countPropInfo).Should().Be(default(int));
+        }
+
+        [Test]
+        public void when_getting_version_branch()
+        {
+            //setup
+            var baseObject = new DeepPropertyBag();
+            var childNode = A.Fake<IVersionControlNode>();
+            var targetSite = baseObject.PropertyInfoFor(x => x.SpecialChild).GetSetMethod();
+            var changes = new[] { new TimestampedPropertyVersionDelta(childNode, targetSite, 0) };
+            var versioningFlatBag = new IntercetpedPropertyBagVersionController<DeepPropertyBag>(baseObject,
+                                                                                                 new DefaultCloneFactory<DeepPropertyBag>(),
+                                                                                                 changes);
+            //act
+            var clone = versioningFlatBag.GetCurrentVersion();
+
+            //assert
+            A.CallTo(() => childNode.Accept(null)).WithAnyArguments().MustHaveHappened();
+            A.CallTo(() => childNode.CurrentDepthCopy()).MustHaveHappened();
+        }
+
+        [Test]
+        public void when_editing_a_requested_version()
+        {
+            //setup
+            var baseObject = new FlatPropertyBag();
+            var targetSite = baseObject.PropertyInfoFor(x => x.Stringey).GetSetMethod();
+            const string originalValue = "One";
+            const int targetVersion = 1;
+
+            var changeSet = new[] { new TimestampedPropertyVersionDelta(originalValue, targetSite, targetVersion) };
+
+            var versioningFlatBag = new IntercetpedPropertyBagVersionController<FlatPropertyBag>(baseObject,
+                                                                                                 new DefaultCloneFactory<FlatPropertyBag>(),
+                                                                                                 changeSet);
+            //act
+            var clone = versioningFlatBag.GetCurrentVersion();
+            clone.Stringey = "something New";
+
+            //assert
+            versioningFlatBag.Get(targetSite.GetParentProperty()).Should().Be(originalValue);
+                //assert that the change did not propagate through to the original
         }
     }
 }

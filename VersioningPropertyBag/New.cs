@@ -29,7 +29,7 @@ namespace VersionCommander
         {
             var baseObject = new TSubject();
             var proxy = MakeVersioningProxy(baseObject, new DefaultCloneFactory<TSubject>());
-            if (constructionCustomizations != null) constructionCustomizations(proxy);
+            if (constructionCustomizations != null) constructionCustomizations.Invoke(proxy);
             return proxy;
         }
 

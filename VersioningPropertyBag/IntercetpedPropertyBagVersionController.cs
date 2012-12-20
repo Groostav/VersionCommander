@@ -102,11 +102,12 @@ namespace VersionCommander
                                                                          _cloneFactory,
                                                                          _mutations);
         }
+
         public TSubject GetCurrentVersion()
         {
             return GetVersionAt(Stopwatch.GetTimestamp());
         }
-        [ThereBeDragons]
+       
         public TSubject GetVersionAt(long ticks)
         {
             //this is actually just in the controller, I actually need to hit dynamic proxies...
@@ -116,6 +117,7 @@ namespace VersionCommander
 
             return clone;
         }
+
         [ThereBeDragons]
         public void ScanAndClone(IVersionControlNode node)
         {
@@ -130,7 +132,7 @@ namespace VersionCommander
             {
                 var versioningChild = indexCandidatePair.Value.Arguments.Single();
                 var cloneVersionNode = versioningChild.VersionControlNode().CurrentDepthCopy();
-                cloneVersionNode.Accept(ScanAndClone); //at its tree depth this node has new memory, but its still referencing the original nodes children. Update those references.
+                cloneVersionNode.Accept(ScanAndClone); //this node has new memory, but its still referencing the original nodes children. Update those references.
                 Mutations[indexCandidatePair.Key] = new TimestampedPropertyVersionDelta(indexCandidatePair.Value, cloneVersionNode);
             }
 
