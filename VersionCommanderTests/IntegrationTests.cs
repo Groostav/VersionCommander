@@ -2,90 +2,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
-using System.Linq.Expressions;
-using AutoMapper;
 using FluentAssertions;
 using NUnit.Framework;
-using System.Collections;
-using VersionCommander.Exceptions;
 
-namespace VersionCommander
+namespace VersionCommander.Tests
 {
     [TestFixture]
-    public  class Host
+    public class IntegrationTests
     {
-        [DebuggerDisplay("DeepPropertyBag : Stringey = {Stringey}")]
-        public class DeepPropertyBag : ICloneable, IEquatable<DeepPropertyBag>, IVersionablePropertyBag
-        {
-            public virtual FlatPropertyBag SpecialChild { get; set; }
-            public virtual IList<FlatPropertyBag> ChildBags { get; set; }
-            public virtual string Stringey { get; set; }
-
-            public object Clone()
-            {
-                var returnable = Mapper.Map<DeepPropertyBag>(this);
-                return returnable;
-            }
-
-            public bool Equals(DeepPropertyBag other)
-            {
-                throw new NotImplementedException();
-            }
-        }
-
-        [DebuggerDisplay("FlatPropertyBag : Stringey = {Stringey}")]
-        public class FlatPropertyBag : ICloneable, IEquatable<FlatPropertyBag>, IVersionablePropertyBag
-        {
-            public virtual string Stringey { get; set; }
-            public virtual int County { get; set; }
-
-            public object Clone()
-            {
-                return Mapper.Map<FlatPropertyBag>(this);
-            }
-
-            #region Equality Nonsense
-
-            public bool Equals(FlatPropertyBag other)
-            {
-                if (ReferenceEquals(null, other)) return false;
-                if (ReferenceEquals(this, other)) return true;
-                return string.Equals(Stringey, other.Stringey) && County == other.County;
-            }
-
-            public override bool Equals(object obj)
-            {
-                if (ReferenceEquals(null, obj)) return false;
-                if (ReferenceEquals(this, obj)) return true;
-                if (obj.GetType() != this.GetType()) return false;
-                return Equals((FlatPropertyBag) obj);
-            }
-
-            public override int GetHashCode()
-            {
-                unchecked
-                {
-                    int hashCode = (Stringey != null ? Stringey.GetHashCode() : 0);
-                    hashCode = (hashCode*397) ^ County;
-                    return hashCode;
-                }
-            }
-
-            public static bool operator ==(FlatPropertyBag left, FlatPropertyBag right)
-            {
-                return Equals(left, right);
-            }
-
-            public static bool operator !=(FlatPropertyBag left, FlatPropertyBag right)
-            {
-                return !Equals(left, right);
-            }
-
-            #endregion
-        }
-
         [Test]
-        public void Should_persist_on_simple_field_assignment()
+        public void when_assigning_field_value_should_appear_persisted()
         {
             var propertyBag = New.Versioning<FlatPropertyBag>();
             var expected = "new Stringey!";
@@ -96,7 +22,7 @@ namespace VersionCommander
         }
 
         [Test]
-        public void should_get_original_copy_when_asking_for_origins_ticks()
+        public void when_asking_for_version_just_post_construction_should_get_default_object()
         {
             var propertyBag = New.Versioning<FlatPropertyBag>();
 
@@ -110,8 +36,7 @@ namespace VersionCommander
         }
 
         [Test]
-        //this is not a unit test...
-        public void custom_equality_comparison_should_return_ok()
+        public void when_performing_equals_on_checked_in_objects()
         {
             var propertyBag = New.Versioning<FlatPropertyBag>();
             var other = propertyBag;
@@ -120,7 +45,7 @@ namespace VersionCommander
         }
 
         [Test]
-        public void should_rollback_a_specified_property()
+        public void when_undoing_a_specific_property_the_result_should_have_the_previous_value()
         {
             var propertyBag = New.Versioning<FlatPropertyBag>();
             propertyBag.Stringey = "changed";
@@ -129,7 +54,7 @@ namespace VersionCommander
         }
 
         [Test]
-        public void should_throw_when_rolling_back_a_wtf_property()
+        public void should_throw_when_attempting_to_rollback_grandchild_object()
         {
             var propertyBag = New.Versioning<FlatPropertyBag>();
             propertyBag.Stringey = "changed";
@@ -137,24 +62,7 @@ namespace VersionCommander
             Assert.Throws<NotImplementedException>(() => propertyBag.UndoLastAssignmentTo(prop => prop.Stringey.Length));
         }
 
-        [Test]
-        public void dicking_around_with_autoamppers_cloneing_functionality()
-        {
-            var sample = new DeepPropertyBag()
-                             {
-                                 ChildBags = new List<FlatPropertyBag>()
-                                                {
-                                                    new FlatPropertyBag() { County = 4, Stringey = "I remember this C#..." },
-                                                    new FlatPropertyBag() { County = 5, Stringey = "deeply nested object initializer nonsense" }
-                                                },
-                                 SpecialChild = new FlatPropertyBag() { County = 6, Stringey = "Sigh, I wish there were a better way" },
-                                 Stringey = "Newed"
-                             };
-
-            var clonedViaAutomapper = (DeepPropertyBag)sample.Clone();
-
-            clonedViaAutomapper.Should().NotBeNull();
-        }
+        //attempting to rollback child with no setter?
 
         [Test]
         public void when_using_the_oject_initializer_symmantics_it_should_properly_set_objcets_and_have_constructor_changes_in_version_control()
@@ -175,7 +83,7 @@ namespace VersionCommander
         }
 
         [Test]
-        public void Should_properly_track_a_version_controlled_child()
+        public void when_constructing_a_versioning_object_hierarchy_all_hierarchy_members_should_have_controllers()
         {
             var sample = New.Versioning<DeepPropertyBag>(bag =>
                              {
@@ -185,13 +93,26 @@ namespace VersionCommander
             sample.Should().NotBeNull();
             sample.SpecialChild.Should().NotBeNull();
 
-            sample.SpecialChild.Should().BeAssignableTo<FlatPropertyBag>();
-            sample.SpecialChild.Should().BeAssignableTo<IVersionController<FlatPropertyBag>>();
-            sample.SpecialChild.Should().BeAssignableTo<IVersionControlNode>();
+            sample.VersionControl().Should().NotBeNull().And.BeAssignableTo<IVersionController<DeepPropertyBag>>();
+            sample.VersionControlNode().Should().NotBeNull().And.BeAssignableTo<IVersionControlNode>();
+            sample.SpecialChild.VersionControl().Should().NotBeNull().And.BeAssignableTo<IVersionController<FlatPropertyBag>>();
+            sample.SpecialChild.VersionControlNode().Should().NotBeNull().And.BeAssignableTo<IVersionControlNode>();
+        } 
+
+        [Test]
+        public void when_constructing_a_versioning_object_hierarchy_all_hierarchy_members_should_be_aware_of_their_parent_and_children ()
+        {
+            var sample = New.Versioning<DeepPropertyBag>(bag =>
+            {
+                bag.SpecialChild = New.Versioning<FlatPropertyBag>();
+            });
+
+            sample.Should().NotBeNull();
+            sample.SpecialChild.Should().NotBeNull();
 
             sample.VersionControlNode().Children.Single().Should().BeSameAs(sample.SpecialChild.VersionControlNode());
             sample.SpecialChild.VersionControlNode().Parent.Should().BeSameAs(sample.VersionControlNode());
-        } 
+        }
         
         [Test]
         public void when_rolling_back_properties_of_unversioned_child()

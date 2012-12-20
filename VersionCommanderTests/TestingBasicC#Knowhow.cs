@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using FluentAssertions;
 using NUnit.Framework;
 using Castle.DynamicProxy;
@@ -123,5 +125,30 @@ namespace VersionCommander
             //so this begs the question: wtf is the default IVersionControlNode? whats the default of any interface?
             //Can I do equals on the default of an interface that extends IEquatable?
         }
+
+
+        [Test]
+        public void messing_around_with_autoamppers_cloneing_functionality()
+        {
+            var firstChild = new FlatPropertyBag() {County = 4, Stringey = "I remember this C#..."};
+            var secondChild = new FlatPropertyBag() {County = 5, Stringey = "deeply nested object initializer nonsense"};
+            var childList = new List<FlatPropertyBag>() {firstChild, secondChild};
+
+            var sample = new DeepPropertyBag()
+            {
+                ChildBags = childList,
+                SpecialChild = new FlatPropertyBag() { County = 6, Stringey = "Sigh, I wish there were a better way" },
+                Stringey = "Newed"
+            };
+
+            var clonedViaAutomapper = (DeepPropertyBag)sample.Clone();
+
+            clonedViaAutomapper.Should().NotBeNull();
+
+            //ahh, so automapper doesnt actually perform a deep copy for me. I should've known this.
+            clonedViaAutomapper.SpecialChild.Should().BeSameAs(sample.SpecialChild);
+            clonedViaAutomapper.ChildBags.First().Should().BeSameAs(firstChild);
+        }
+
     }
 }

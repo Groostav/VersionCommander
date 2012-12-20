@@ -22,7 +22,7 @@ namespace VersionCommander
     internal interface IVersionControlNode
     {
         void InternalRollback(long ticks);
-        IVersionControlNode ShallowCopy();
+        IVersionControlNode CurrentDepthCopy();
 
         IList<IVersionControlNode> Children { get; set; }
         IVersionControlNode Parent { get; set; }

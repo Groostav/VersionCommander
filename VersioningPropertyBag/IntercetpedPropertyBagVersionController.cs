@@ -96,7 +96,7 @@ namespace VersionCommander
             _mutations.Remove(_mutations.Last(mutation => mutation.TargetSite == targetMember.GetSetMethod()));
         }
 
-        public IVersionControlNode ShallowCopy()
+        public IVersionControlNode CurrentDepthCopy()
         {
             return new IntercetpedPropertyBagVersionController<TSubject>(_cloneFactory.CreateCloneOf(_content),
                                                                          _cloneFactory,
@@ -119,30 +119,37 @@ namespace VersionCommander
         [ThereBeDragons]
         public void ScanAndClone(IVersionControlNode node)
         {
-            Debug.Assert(! (typeof (TimestampedPropertyVersionDelta).IsAssignableTo<IEquatable<TimestampedPropertyVersionDelta>>()), 
-                         "IndexOf() could get undesired matches if TimestampedPropertyVersionDelta.Equals() does anything other than reference equals." +
-                         "It also doesn't take an equality comparer, so I cant simply force reference equals.");
-
             //command object vs delegate strikes: I used Mutations...., which referenced this, which got nicely closed in by C# and i recursed infinitely.
                 //moral: command objects give you a little more type safetly.
-            var candidates = node.Mutations.Where(mutation => mutation.IsSettingVersioningObject());
 
-            foreach (var candidate in candidates)
+            var candidatesByIndex = GetCadidatesByIndex(node);
+            //thanks to use of enumerables, this actually consumes very little stack space, meaning I can safely handle fairly large graphs
+                //outside of image/audio processing though I suspect its rare to have multi-meg object trees.
+
+            foreach (var indexCandidatePair in candidatesByIndex)
             {
-                var targetIndex = node.Mutations.IndexOf(candidate);
-                var cloneVersionNode = candidate.Arguments.Single().VersionControlNode().ShallowCopy();
-                cloneVersionNode.Accept(ScanAndClone); //hes been given new shallow memory, make sure he repeats this process.
-                Mutations[targetIndex] = new TimestampedPropertyVersionDelta(candidate, cloneVersionNode);
+                var versioningChild = indexCandidatePair.Value.Arguments.Single();
+                var cloneVersionNode = versioningChild.VersionControlNode().CurrentDepthCopy();
+                cloneVersionNode.Accept(ScanAndClone); //at its tree depth this node has new memory, but its still referencing the original nodes children. Update those references.
+                Mutations[indexCandidatePair.Key] = new TimestampedPropertyVersionDelta(indexCandidatePair.Value, cloneVersionNode);
             }
 
             //refresh candidates, since all mutations are now different and in new memory
-            candidates = node.Mutations.Where(mutation => mutation.IsSettingVersioningObject());
+            candidatesByIndex = GetCadidatesByIndex(node);
 
-            var children = candidates.GroupBy(mutation => mutation.TargetSite)
-                                     .Select(group => group.Last())
-                                     .Select(mutation => mutation.Arguments.Single().VersionControlNode()))
+            //TODO Mutations should be ordered, but a Contract or Debug.Assert would be nice here.
+            var children = candidatesByIndex.GroupBy(mutation => mutation.Value.TargetSite)
+                                            .Select(group => group.Last())
+                                            .Select(mutation => mutation.Value.Arguments.Single().VersionControlNode());
 
             node.Children = children.ToList();
+        }
+
+        private IEnumerable<KeyValuePair<int, TimestampedPropertyVersionDelta>> GetCadidatesByIndex(IVersionControlNode node)
+        {            
+            return from index in Enumerable.Range(0, node.Mutations.Count) 
+                   where node.Mutations[index].IsSettingVersioningObject() 
+                   select new KeyValuePair<int, TimestampedPropertyVersionDelta>(index, node.Mutations[index]);
         }
 
         public TSubject WithoutVersionControl()

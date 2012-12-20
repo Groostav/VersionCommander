@@ -15,7 +15,7 @@ namespace VersionCommander
             throw new NotImplementedException();
         }
 
-        public IVersionControlNode ShallowCopy()
+        public IVersionControlNode CurrentDepthCopy()
         {
             return new VersioningList<TElement>(this);
         }
