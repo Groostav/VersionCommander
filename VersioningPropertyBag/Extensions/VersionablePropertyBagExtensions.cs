@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq.Expressions;
-using System.Reflection;
 using VersionCommander.Exceptions;
 
-namespace VersionCommander
+namespace VersionCommander.Extensions
 {
     // ReSharper disable SuspiciousTypeConversion.Global -- plenty suspicious casts when working with dynamic proxies
     // ReSharper disable ExpressionIsAlwaysNull -- so if its not suspicious its always null huh :\

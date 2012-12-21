@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using Castle.DynamicProxy;
+using VersionCommander.Extensions;
 
 namespace VersionCommander
 {

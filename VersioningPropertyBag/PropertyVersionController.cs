@@ -1,16 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using Castle.Core.Internal;
-using VersionCommander.Exceptions;
+using VersionCommander.Extensions;
 
 namespace VersionCommander
 {
-    internal class IntercetpedPropertyBagVersionController<TSubject> : IVersionControlNode, IVersionController<TSubject> 
+    internal class PropertyVersionController<TSubject> : IVersionControlNode, IVersionController<TSubject> 
         where TSubject : class
     {
         public IList<IVersionControlNode> Children { get; set; }
@@ -23,9 +22,9 @@ namespace VersionCommander
 
         public IList<TimestampedPropertyVersionDelta> Mutations { get { return _mutations; } } 
 
-        public IntercetpedPropertyBagVersionController(TSubject content,
-                                                       ICloneFactory<TSubject> cloneFactory,
-                                                       IEnumerable<TimestampedPropertyVersionDelta> existingChanges)
+        public PropertyVersionController(TSubject content,
+                                         ICloneFactory<TSubject> cloneFactory,
+                                         IEnumerable<TimestampedPropertyVersionDelta> existingChanges)
         {
             Children =  new List<IVersionControlNode>();
             _mutations = new List<TimestampedPropertyVersionDelta>();
@@ -98,7 +97,7 @@ namespace VersionCommander
 
         public IVersionControlNode CurrentDepthCopy()
         {
-            return new IntercetpedPropertyBagVersionController<TSubject>(_cloneFactory.CreateCloneOf(_content),
+            return new PropertyVersionController<TSubject>(_cloneFactory.CreateCloneOf(_content),
                                                                          _cloneFactory,
                                                                          _mutations);
         }
@@ -119,7 +118,7 @@ namespace VersionCommander
         }
 
         [ThereBeDragons]
-        public void ScanAndClone(IVersionControlNode node)
+        internal void ScanAndClone(IVersionControlNode node)
         {
             //command object vs delegate strikes: I used Mutations...., which referenced this, which got nicely closed in by C# and i recursed infinitely.
                 //moral: command objects give you a little more type safetly.

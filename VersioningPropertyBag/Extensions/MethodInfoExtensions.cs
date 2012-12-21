@@ -3,7 +3,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace VersionCommander
+namespace VersionCommander.Extensions
 {
     public static class MethodInfoExtensions
     {

@@ -53,22 +53,21 @@
     <Compile Include="IImmutable.cs" />
     <Compile Include="IVersionablePropertyBag.cs" />
     <Compile Include="IVersionControlNode.cs" />
-    <Compile Include="MethodInfoExtensions.cs" />
-    <Compile Include="MsCorLibExtensions.cs" />
+    <Compile Include="Extensions\MethodInfoExtensions.cs" />
+    <Compile Include="Extensions\MsCorLibExtensions.cs" />
+    <Compile Include="New.cs" />
     <Compile Include="PropertyBagCloner.cs" />
     <Compile Include="Exceptions\UntrackedObjectException.cs" />
     <Compile Include="ThereBeDragons.cs" />
-    <Compile Include="TypeExtensions.cs" />
-    <Compile Include="VersionControlInterceptor.cs" />
+    <Compile Include="Extensions\TypeExtensions.cs" />
+    <Compile Include="Interceptors\VersionControlInterceptor.cs" />
     <Compile Include="PropertyVersionDelta.cs" />
     <Compile Include="Exceptions\VersionDeltaNotFoundException.cs" />
-    <Compile Include="New.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SubjectPropertyInterceptor.cs" />
+    <Compile Include="Interceptors\SubjectPropertyInterceptor.cs" />
     <Compile Include="VersioningList.cs" />
-    <Compile Include="VersioningProxyGenerationHook.cs" />
-    <Compile Include="IntercetpedPropertyBagVersionController.cs" />
-    <Compile Include="VersionablePropertyBagExtensions.cs" />
+    <Compile Include="PropertyVersionController.cs" />
+    <Compile Include="Extensions\VersionablePropertyBagExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

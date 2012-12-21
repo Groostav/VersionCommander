@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace VersionCommander
+namespace VersionCommander.Extensions
 {
     public static class MsCorLibExtensions
     {

@@ -2,6 +2,7 @@
 using System.Linq;
 using FluentAssertions;
 using NUnit.Framework;
+using VersionCommander.Extensions;
 
 namespace VersionCommander
 {

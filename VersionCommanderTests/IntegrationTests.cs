@@ -145,9 +145,17 @@ namespace VersionCommander.Tests
         }        
 
         //get grand-fathering working
+            //controller unit tests asserts that Accept with Clone was called
+            //also edits a copied child and makes sure the original wasnt altered
+
         //Make sure garbage collection works        
+            //untested, unbouded memory growth.
+
         //make sure references make sense.
+            //uhhhnnnyeehh-untested
         //make sure equals works as expected
+                
+
         //whatever soluition you come up with for grand fathering make sure it threads well
         //make sure that if objects are tagged with IVersionablePropertyBag but not checked in anywhere everything still acts as expected
 

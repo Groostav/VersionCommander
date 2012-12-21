@@ -7,7 +7,9 @@ using FluentAssertions;
 using Machine.Specifications;
 using NUnit.Framework;
 using VersionCommander;
+using VersionCommander.Extensions;
 using VersionCommander.Tests;
+using TestHelper = VersionCommander.Tests.TestHelper;
 
 namespace VersionCommander
 {
@@ -18,48 +20,48 @@ namespace VersionCommander
     public class when_creating_version_controllers
     {
         private static FlatPropertyBag baseObject;
-        private static IntercetpedPropertyBagVersionController<FlatPropertyBag> controller;
-        private static string result = "Unassigned";
+        private static PropertyVersionController<FlatPropertyBag> controller;
+        private static string _result = "Unassigned";
         private static long postConstruction;
 
         Establish context = () => 
         {
             baseObject = new FlatPropertyBag();
-            controller = new IntercetpedPropertyBagVersionController<FlatPropertyBag>(baseObject,
-                                                                                      new DefaultCloneFactory<FlatPropertyBag>(),
-                                                                                      TestHelper.EmptyChangeSet());
+            controller = new PropertyVersionController<FlatPropertyBag>(baseObject,
+                                                                       TestHelper.DefaultCloneFactoryFor<FlatPropertyBag>(),
+                                                                       TestHelper.EmptyChangeSet());
             postConstruction = Stopwatch.GetTimestamp();
         };
 
         Because of = () =>
         {
             controller.Set(baseObject.PropertyInfoFor(x => x.Stringey), "New value!!");
-            result = controller.GetVersionAt(postConstruction).Stringey;
+            _result = controller.GetVersionAt(postConstruction).Stringey;
         };
 
-        It should_not_have_the_new_value_for_the_result = () => result.Should().NotBe("New value!!");
-        It should_have_the_original_value_for_the_result = () => result.Should().Be(null);
+        It should_not_have_the_new_value_for_the_result = () => _result.Should().NotBe("New value!!");
+        It should_have_the_original_value_for_the_result = () => _result.Should().Be(null);
     }
 
 
     [TestFixture]
-    public class IntercetpedPropertyBagVersionControllerFixture
+    public class PropertyVersionControllerFixture
     {
         [Test]
         public void when_using_explicit_setter()
         {
             //setup
             var baseObject = new FlatPropertyBag();
-            var versioningFlatBag = new IntercetpedPropertyBagVersionController<FlatPropertyBag>(baseObject,
-                                                                                                 new DefaultCloneFactory<FlatPropertyBag>(),
-                                                                                                 TestHelper.EmptyChangeSet());
+            var versioningFlatBag = new PropertyVersionController<FlatPropertyBag>(baseObject,
+                                                                                   TestHelper.DefaultCloneFactoryFor<FlatPropertyBag>(),
+                                                                                   TestHelper.EmptyChangeSet());
             const string changedValue = "Change!";
 
             //act
             versioningFlatBag.Set(baseObject.PropertyInfoFor(x => x.Stringey), changedValue);
 
             //assert
-            versioningFlatBag.Mutations.Should().ContainSingle(mutation => mutation.Arguments.Single() == changedValue);
+            versioningFlatBag.Mutations.Should().ContainSingle(mutation => changedValue.Equals(mutation.Arguments.Single()) );
         }
 
         [Test]
@@ -67,9 +69,9 @@ namespace VersionCommander
         {
             //setup
             var baseObject = new FlatPropertyBag();
-            var versioningFlatBag = new IntercetpedPropertyBagVersionController<FlatPropertyBag>(baseObject,
-                                                                                                 new DefaultCloneFactory<FlatPropertyBag>(),
-                                                                                                 TestHelper.EmptyChangeSet());
+            var versioningFlatBag = new PropertyVersionController<FlatPropertyBag>(baseObject,
+                                                                                   TestHelper.DefaultCloneFactoryFor<FlatPropertyBag>(),
+                                                                                   TestHelper.EmptyChangeSet());
             var constructionTimeStamp = Stopwatch.GetTimestamp();
             var changedValue = "Change!";
 
@@ -98,9 +100,9 @@ namespace VersionCommander
                                     new TimestampedPropertyVersionDelta("Three",            targetSite,  targetVersion + 1)
                                 };
 
-            var versioningFlatBag = new IntercetpedPropertyBagVersionController<FlatPropertyBag>(baseObject,
-                                                                                                 new DefaultCloneFactory<FlatPropertyBag>(),
-                                                                                                 changeSet);
+            var versioningFlatBag = new PropertyVersionController<FlatPropertyBag>(baseObject,
+                                                                                   TestHelper.DefaultCloneFactoryFor<FlatPropertyBag>(),
+                                                                                   changeSet);
 
             //act
             var retrievedVersion = versioningFlatBag.GetVersionAt(targetVersion).Stringey;
@@ -117,16 +119,14 @@ namespace VersionCommander
             var targetSite = baseObject.PropertyInfoFor(x => x.Stringey).GetSetMethod();
             const int targetVersion = 1;
 
-            var changeSet = new[]{ new TimestampedPropertyVersionDelta("One", targetSite,  targetVersion) };
-
-            var versioningFlatBag = new IntercetpedPropertyBagVersionController<FlatPropertyBag>(baseObject,
-                                                                                                 new DefaultCloneFactory<FlatPropertyBag>(),
-                                                                                                 changeSet);
+            var versioningFlatBag = new PropertyVersionController<FlatPropertyBag>(baseObject,
+                                                                                   TestHelper.DefaultCloneFactoryFor<FlatPropertyBag>(),
+                                                                                   TestHelper.ChangeSet("One", targetSite, targetVersion));
             //act
             versioningFlatBag.RollbackTo(targetVersion - 1);
 
             //assert
-            versioningFlatBag.Get(targetSite.GetParentProperty()).As<string>().Should().Be(null);
+            versioningFlatBag.Get(targetSite.GetParentProperty()).Should().BeNull();
         }
 
         [Test]
@@ -145,9 +145,9 @@ namespace VersionCommander
                                     new TimestampedPropertyVersionDelta("Three",            targetSite,  targetVersion + 1)
                                 };
 
-            var versioningFlatBag = new IntercetpedPropertyBagVersionController<FlatPropertyBag>(baseObject,
-                                                                                                 new DefaultCloneFactory<FlatPropertyBag>(),
-                                                                                                 changeSet);
+            var versioningFlatBag = new PropertyVersionController<FlatPropertyBag>(baseObject,
+                                                                                   TestHelper.DefaultCloneFactoryFor<FlatPropertyBag>(),
+                                                                                   changeSet);
             //act
             versioningFlatBag.RollbackTo(targetVersion);
 
@@ -168,9 +168,9 @@ namespace VersionCommander
             var baseObject = new FlatPropertyBag();
             var stringPropInfo = baseObject.PropertyInfoFor(x => x.Stringey);
             var countPropInfo = baseObject.PropertyInfoFor(x => x.County);
-            var versioningFlatBag = new IntercetpedPropertyBagVersionController<FlatPropertyBag>(baseObject,
-                                                                                                 new DefaultCloneFactory<FlatPropertyBag>(),
-                                                                                                 TestHelper.EmptyChangeSet());
+            var versioningFlatBag = new PropertyVersionController<FlatPropertyBag>(baseObject,
+                                                                                   TestHelper.DefaultCloneFactoryFor<FlatPropertyBag>(),
+                                                                                   TestHelper.EmptyChangeSet());
             //act
             versioningFlatBag.RollbackTo(0);
 
@@ -182,19 +182,19 @@ namespace VersionCommander
         [Test]
         public void when_getting_version_branch()
         {
-            //setup
-            var baseObject = new DeepPropertyBag();
-            var childNode = A.Fake<IVersionControlNode>();
-            var targetSite = baseObject.PropertyInfoFor(x => x.SpecialChild).GetSetMethod();
-            var changes = new[] { new TimestampedPropertyVersionDelta(childNode, targetSite, 0) };
-            var versioningFlatBag = new IntercetpedPropertyBagVersionController<DeepPropertyBag>(baseObject,
-                                                                                                 new DefaultCloneFactory<DeepPropertyBag>(),
-                                                                                                 changes);
-            //act
-            var clone = versioningFlatBag.GetCurrentVersion();
-
-            //assert
-            A.CallTo(() => childNode.Accept(null)).WithAnyArguments().MustHaveHappened();
+             //setup
+             var baseObject = new DeepPropertyBag();
+             var childNode = A.Fake<IVersionControlNode>();
+             var targetSite = baseObject.PropertyInfoFor(x => x.SpecialChild).GetSetMethod();
+            
+             var versioningFlatBag = new PropertyVersionController<DeepPropertyBag>(baseObject,
+                                                                                    TestHelper.DefaultCloneFactoryFor<DeepPropertyBag>(),
+                                                                                    TestHelper.ChangeSet(childNode, targetSite, version:0));
+             //act
+            versioningFlatBag.GetCurrentVersion();
+            
+             //assert
+            A.CallTo(() => childNode.Accept(null)).WhenArgumentsMatch(args => args.Single().IsAction<IVersionControlNode>(versioningFlatBag.ScanAndClone)).MustHaveHappened();
             A.CallTo(() => childNode.CurrentDepthCopy()).MustHaveHappened();
         }
 
@@ -207,11 +207,9 @@ namespace VersionCommander
             const string originalValue = "One";
             const int targetVersion = 1;
 
-            var changeSet = new[] { new TimestampedPropertyVersionDelta(originalValue, targetSite, targetVersion) };
-
-            var versioningFlatBag = new IntercetpedPropertyBagVersionController<FlatPropertyBag>(baseObject,
-                                                                                                 new DefaultCloneFactory<FlatPropertyBag>(),
-                                                                                                 changeSet);
+            var versioningFlatBag = new PropertyVersionController<FlatPropertyBag>(baseObject,
+                                                                                   TestHelper.DefaultCloneFactoryFor<FlatPropertyBag>(),
+                                                                                   TestHelper.ChangeSet(originalValue, targetSite, targetVersion));
             //act
             var clone = versioningFlatBag.GetCurrentVersion();
             clone.Stringey = "something New";

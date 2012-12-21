@@ -59,7 +59,7 @@ namespace VersionCommander
                                                               IEnumerable<TimestampedPropertyVersionDelta> existingModifications = null)
             where TSubject : class
         {
-            var repository = new IntercetpedPropertyBagVersionController<TSubject>(baseObject, cloneFactory, existingModifications);
+            var repository = new PropertyVersionController<TSubject>(baseObject, cloneFactory, existingModifications);
 
             //repository.Accept(CloneAndUpdateChildRepos);
             //the problem is children. the problem is always children.

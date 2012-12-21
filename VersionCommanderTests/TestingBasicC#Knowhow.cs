@@ -4,9 +4,8 @@ using System.Linq;
 using FluentAssertions;
 using NUnit.Framework;
 using Castle.DynamicProxy;
-using VersionCommander.Tests;
 
-namespace VersionCommander
+namespace VersionCommander.Tests
 {
     public class TestingBasicCSharpKnowhow
     {
@@ -118,7 +117,6 @@ namespace VersionCommander
             {
                 var fromCastle = new ProxyGenerator().CreateClassProxy(typeof (CloneableStruct), new object[]{"Value!"}, new IInterceptor[0]);
                 var cast = fromCastle as IVersionControlNode;
-                cast.Should().NotBe(default(IVersionControlNode));
                 cast.Should().NotBe(default(CloneableStruct));
                 cast.Should().BeNull();
             }
@@ -162,5 +160,28 @@ namespace VersionCommander
             Assert.Throws<NotSupportedException>(() => cast.Add("Wat"));
             //so that makes sense, this is typical "collection is a fixed size" behavior.
         }
+
+        [Test]
+        public void when_calling_equals_on_delegates()
+        {
+            var func = new Func<int>(() => 1);
+//            func.Should().Be(new Func<int>(() => 1));  //fails
+            func.Should().NotBe(new Func<int>(() => 1)); //so this is intresting,
+            //microsoft MVPs immediatly start talking about performance optimizations, and how the compiler will optimize those lambdas to avoid code explosion.
+            //but even still, there is documentation for MulticastDelegate.Equals(), and this doesnt seem to adhere to that.
+                //http://social.msdn.microsoft.com/Forums/nl/netfxbcl/thread/b6f9d0e8-78b8-4950-bcc1-f6717bdb4388
+                //http://msdn.microsoft.com/en-us/library/1ts3c5tx
+
+            (func as MulticastDelegate).Equals(new Func<int>(() => 1) as MulticastDelegate).Should().BeFalse();  
+            //so I guess it boils down to lambdas, and how LambdaExpression.Compile() works. 
+
+            var action = new Action(when_calling_equals_on_delegates);
+            action.Should().Be(new Action(when_calling_equals_on_delegates));
+            //so when you create a direct delegate, everything goes smoothly: the invocation lists are compared as as you'd expect,
+
+            //but when you use a lambda...
+            action.Should().NotBe(new Action(() => when_calling_equals_on_delegates()));
+            //you get unequality.
+        }        
     }
 }

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using Castle.Core.Internal;
+using VersionCommander.Extensions;
 
 namespace VersionCommander
 {
