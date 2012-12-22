@@ -4,7 +4,7 @@ using FluentAssertions;
 using NUnit.Framework;
 using VersionCommander.Extensions;
 
-namespace VersionCommander
+namespace VersionCommander.Tests
 {
     public class MethodInfoExtensionsTesting
     {

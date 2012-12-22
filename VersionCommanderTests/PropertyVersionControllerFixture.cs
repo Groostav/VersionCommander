@@ -1,17 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using FakeItEasy;
 using FluentAssertions;
 using Machine.Specifications;
 using NUnit.Framework;
-using VersionCommander;
 using VersionCommander.Extensions;
-using VersionCommander.Tests;
-using TestHelper = VersionCommander.Tests.TestHelper;
 
-namespace VersionCommander
+namespace VersionCommander.Tests
 {
     //blegh, resharper doesnt see it, and these tests are clumsy. 
     //I might use this for the integrationee stuff, but for an object as annoyingly complex
@@ -99,10 +95,13 @@ namespace VersionCommander
                                     new TimestampedPropertyVersionDelta(targetVersionValue, targetSite,  targetVersion),
                                     new TimestampedPropertyVersionDelta("Three",            targetSite,  targetVersion + 1)
                                 };
+            
 
             var versioningFlatBag = new PropertyVersionController<FlatPropertyBag>(baseObject,
                                                                                    TestHelper.DefaultCloneFactoryFor<FlatPropertyBag>(),
-                                                                                   changeSet);
+                                                                                   TestHelper.ChangeSet(new[] { "One", targetVersionValue, "Three" }, 
+                                                                                                        Enumerable.Repeat(targetSite, 3);, 
+                                                                                                        new[] { targetVersion - 1L, targetVersion, targetVersion + 1L }));
 
             //act
             var retrievedVersion = versioningFlatBag.GetVersionAt(targetVersion).Stringey;

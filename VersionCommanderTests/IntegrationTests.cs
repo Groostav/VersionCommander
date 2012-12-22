@@ -4,6 +4,7 @@ using System.Linq;
 using System.Diagnostics;
 using FluentAssertions;
 using NUnit.Framework;
+using VersionCommander.Extensions;
 
 namespace VersionCommander.Tests
 {

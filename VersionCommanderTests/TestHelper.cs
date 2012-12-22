@@ -28,14 +28,19 @@ namespace VersionCommander.Tests
             return new[] {new TimestampedPropertyVersionDelta(value, method, version)};
         }
 
-        public static IEnumerable<TimestampedPropertyVersionDelta> ChangeSet(object[] values,
-                                                                             MethodInfo[] methods,
-                                                                             long[] versions)
+        public static IEnumerable<TimestampedPropertyVersionDelta> ChangeSet(IEnumerable<object> values,
+                                                                             IEnumerable<MethodInfo> methods,
+                                                                             IEnumerable<long> versions)
         {
-            Debug.Assert(methods.Length == versions.Length && versions.Length == values.Length);
-            foreach(var index in Enumerable.Range(0, methods.Length))
+            var flatValues = values.ToArray();
+            var flatMethods = methods.ToArray();
+            var flatVersions = versions.ToArray();
+
+            Debug.Assert(flatMethods.Length == flatVersions.Length && flatVersions.Length == flatValues.Length);
+
+            foreach(var index in Enumerable.Range(0, flatMethods.Length))
             {
-                yield return new TimestampedPropertyVersionDelta(values[index], methods[index], versions[index]);
+                yield return new TimestampedPropertyVersionDelta(flatValues[index], flatMethods[index], flatVersions[index]);
             }
         }
 

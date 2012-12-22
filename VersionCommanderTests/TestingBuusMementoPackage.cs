@@ -4,7 +4,7 @@ using FluentAssertions;
 using NUnit.Framework;
 using Memento;
 
-namespace VersionCommander
+namespace VersionCommander.Tests
 {
     [TestFixture]
     //hmm, poking around in this package, moral of the story: Yo dawg Events are pretty nice and 
