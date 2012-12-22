@@ -32,7 +32,7 @@ namespace VersionCommander
 
         IList<TimestampedPropertyVersionDelta> Mutations { get; }
 
-        object Get(PropertyInfo targetProperty);
-        void Set(PropertyInfo targetProperty, object value);
+        object Get(PropertyInfo targetProperty, long version);
+        void Set(PropertyInfo targetProperty, object value, long version);
     }
 }

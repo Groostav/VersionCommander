@@ -71,6 +71,34 @@ namespace VersionCommander
 
         public void UndoLastAssignmentTo<TTarget>(Expression<Func<TSubject, TTarget>> targetSite)
         {
+            var targetMember = GetRequestedMember(targetSite).GetSetMethod();
+            var targetMutation = _mutations.Last(mutation => mutation.TargetSite == targetMember);
+            targetMutation.IsActive = false;
+        }
+
+        public void RedoLastAssignmentTo<TTarget>(Expression<Func<TSubject, TTarget>> targetSite)
+        {
+            var targetProperty = GetRequestedMember(targetSite);
+            EnsureCanRedoChangeTo(targetProperty);
+            var targetSetter = targetProperty.GetSetMethod();
+
+            var targetDelta = _mutations.First(mutation => mutation.TargetSite == targetSetter && !mutation.IsActive);
+            targetDelta.IsActive = true;
+        }
+
+        private void EnsureCanRedoChangeTo(PropertyInfo targetMember)
+        {
+            var targetMethod = targetMember.GetSetMethod();
+            if ( ! _mutations.Any(mutation => mutation.TargetSite == targetMethod && !mutation.IsActive))
+            {
+                throw new UntrackedObjectException(
+                    string.Format("No change to {0} can be redone, as either no changes have been made yet, " +
+                                  "or a previous call to set {0} deleted all previously undone values.", targetMember.Name));
+            }
+        }
+
+        private PropertyInfo GetRequestedMember<TTarget>(Expression<Func<TSubject, TTarget>> targetSite)
+        {
             var unwoundMessageChain = new Queue<MemberInfo>();
             var root = targetSite.Body;
 
@@ -82,42 +110,43 @@ namespace VersionCommander
             }
 
             if (unwoundMessageChain.Count > 1)
-            {                
-                throw new UntrackedObjectException(string.Format("Cannot undo assignments to properties of child objects. If that child is itself versionable, " +
-                                                                 "invoke {0}() on the child directly",
-                                                                 MethodInfoExtensions.GetMethodInfo(() => UndoLastAssignmentTo<TTarget>(null)).Name));
+            {
+                throw new UntrackedObjectException(
+                    string.Format(
+                        "Cannot undo assignments to properties of child objects. If that child is itself versionable, " +
+                        "invoke {0}() on the child directly",
+                        MethodInfoExtensions.GetMethodInfo(() => UndoLastAssignmentTo<TTarget>(null)).Name));
             }
             else if (unwoundMessageChain.Count < 1)
             {
-                throw new UntrackedObjectException(string.Format("Cannot undo assignments to versioning objects via {0}(). Did you mean to use {1}()?",
-                                                                 MethodInfoExtensions.GetMethodInfo(() => UndoLastAssignmentTo<TTarget>(null)).Name,
-                                                                 MethodInfoExtensions.GetMethodInfo(() => RollbackTo(-1)).Name));
+                throw new UntrackedObjectException(
+                    string.Format("Cannot undo assignments to versioning objects via {0}(). Did you mean to use {1}()?",
+                                  MethodInfoExtensions.GetMethodInfo(() => UndoLastAssignmentTo<TTarget>(null)).Name,
+                                  MethodInfoExtensions.GetMethodInfo(() => RollbackTo(-1)).Name));
             }
 
             var targetMember = unwoundMessageChain.Dequeue() as PropertyInfo;
 
             if (targetMember == null)
             {
-                throw new UntrackedObjectException(string.Format("Could not determine target member to rollback. Best candidate was {0} but it is not a property.",
-                                                                 targetMember.Name));
+                throw new UntrackedObjectException(
+                    string.Format(
+                        "Could not determine target member to rollback. Best candidate was {0} but it is not a property.",
+                        targetMember.Name));
             }
 
             var targetSetter = targetMember.GetSetMethod();
 
             if (targetSetter == null)
             {
-                throw new UntrackedObjectException(string.Format("Could not find a setter for the property {0}, thus it cannot be versioned",
-                                                                 targetSite.Name));
+                throw new UntrackedObjectException(
+                    string.Format("Could not find a setter for the property {0}, thus it cannot be versioned",
+                                  targetSite.Name));
             }
 
-            _mutations.Remove(_mutations.Last(mutation => mutation.TargetSite == targetMember.GetSetMethod()));
+            return targetMember;
         }
 
-
-        public void RedoLastAssignmentTo<TTarget>(Expression<Func<TSubject, TTarget>> targetSite)
-        {
-            throw new NotImplementedException();
-        }
 
         public IVersionControlNode CurrentDepthCopy()
         {
@@ -193,18 +222,20 @@ namespace VersionCommander
             Children.ForEach(child => child.Accept(visitor));
         }
 
-        public object Get(PropertyInfo targetProperty)
+        public object Get(PropertyInfo targetProperty, long version = long.MaxValue)
         {
-            return GetVersionOfPropertyAt(targetProperty, Stopwatch.GetTimestamp());
+            return GetVersionOfPropertyAt(targetProperty, version);
         }
-        public void Set(PropertyInfo targetProperty, object value)
+        public void Set(PropertyInfo targetProperty, object value, long version)
         {
-            _mutations.Add(new TimestampedPropertyVersionDelta(value, targetProperty.GetSetMethod(), Stopwatch.GetTimestamp()));
+            var targetSite = targetProperty.GetSetMethod();
+            _mutations.RemoveAll(mutation => mutation.TargetSite == targetSite && !mutation.IsActive);
+            _mutations.Add(new TimestampedPropertyVersionDelta(value, targetSite, version));
         }
 
         private object GetVersionOfPropertyAt(PropertyInfo targetProperty, long targetTimestamp)
         {
-            var lastReturned = _mutations.Where(mutation => mutation.TimeStamp < targetTimestamp)
+            var lastReturned = _mutations.Where(mutation => mutation.TimeStamp < targetTimestamp && mutation.IsActive)
                                          .LastOrDefault(mutation => mutation.TargetSite == targetProperty.GetSetMethod());
 
             return lastReturned != null

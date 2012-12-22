@@ -23,24 +23,27 @@ namespace VersionCommander.Tests
 
         public static IEnumerable<TimestampedPropertyVersionDelta> ChangeSet(object value,
                                                                              MethodInfo method,
-                                                                             long version)
+                                                                             long version,
+                                                                             bool isActive = true)
         {
-            return new[] {new TimestampedPropertyVersionDelta(value, method, version)};
+            return new[] {new TimestampedPropertyVersionDelta(value, method, version, isActive)};
         }
 
         public static IEnumerable<TimestampedPropertyVersionDelta> ChangeSet(IEnumerable<object> values,
                                                                              IEnumerable<MethodInfo> methods,
-                                                                             IEnumerable<long> versions)
+                                                                             IEnumerable<long> versions,
+                                                                             IEnumerable<bool> isActives = null)
         {
             var flatValues = values.ToArray();
             var flatMethods = methods.ToArray();
             var flatVersions = versions.ToArray();
+            var flatActives = isActives == null ? Enumerable.Repeat(true, flatValues.Length).ToArray() : isActives.ToArray();
 
-            Debug.Assert(flatMethods.Length == flatVersions.Length && flatVersions.Length == flatValues.Length);
+            Debug.Assert(flatMethods.Length == flatVersions.Length && flatVersions.Length == flatValues.Length && flatValues.Length == flatActives.Length);
 
             foreach(var index in Enumerable.Range(0, flatMethods.Length))
             {
-                yield return new TimestampedPropertyVersionDelta(flatValues[index], flatMethods[index], flatVersions[index]);
+                yield return new TimestampedPropertyVersionDelta(flatValues[index], flatMethods[index], flatVersions[index], flatActives[index]);
             }
         }
 

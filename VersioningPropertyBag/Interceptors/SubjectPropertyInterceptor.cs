@@ -21,6 +21,7 @@ namespace VersionCommander
             _members = typeof (TSubject).GetProperties();
         }
 
+        [ThereBeDragons("use of Stopwatch.GetTimestamp()")]
         public void Intercept(IInvocation invocation)
         {
             if (invocation.Method.DeclaringType != typeof(TSubject))
@@ -32,12 +33,12 @@ namespace VersionCommander
             if(invocation.Method.IsPropertyGetter())
             {
                 var member = _members.Single(candidate => candidate.GetGetMethod() == invocation.Method);
-                invocation.ReturnValue = _controller.Get(member);
+                invocation.ReturnValue = _controller.Get(member, Stopwatch.GetTimestamp());
             }
             else if (invocation.Method.IsPropertySetter())
             {
                 var member = _members.Single(candidate => candidate.GetSetMethod() == invocation.Method);
-                _controller.Set(member, invocation.Arguments.Single());
+                _controller.Set(member, invocation.Arguments.Single(), Stopwatch.GetTimestamp());
             }
             return;
         }

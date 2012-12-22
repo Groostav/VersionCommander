@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using FakeItEasy;
 using FluentAssertions;
 using NUnit.Framework;
 using Castle.DynamicProxy;
@@ -181,7 +182,36 @@ namespace VersionCommander.Tests
 
             //but when you use a lambda...
             action.Should().NotBe(new Action(() => when_calling_equals_on_delegates()));
-            //you get unequality.
+            //you get unequality. This is where the iffy behavior mentioned by the MS MVP kick in: if the compiler realizes that this lambda is identical
+            //with another lambda somewhere else, it will use the same generated function for each lambda, and thus equality between the two will return true,
+            //as they'll both be multicast delegates with the same invocation list.                
         }        
+
+        private class IntBox
+        {
+            public int IntProperty { get; set; }
+        }
+
+        [Test, Ignore("This is issue #32 with Fake it easy @https://github.com/FakeItEasy/FakeItEasy/issues/32")]
+        public void when_using_A_callTo_on_a_property_set_call()
+        {
+            var fake = A.Fake<IntBox>();
+            fake.IntProperty = 4;
+
+            A.CallTo(() => fake.IntProperty).WithAnyArguments().MustNotHaveHappened();
+            //ahhh so set calls are excluded...
+
+//            A.CallTo(() => fake.IntProperty = -1).WithAnyArguments().MustHaveHappened();
+            //and of course an expression cannot contain an assignment operator...
+        }
+
+        [Test]
+        public void when_using_A_callTo_on_a_property_get_call()
+        {
+            var fake = A.Fake<FlatPropertyBag>();
+            var retrieved = fake.IntProperty;
+
+            A.CallTo(() => fake.IntProperty).WithAnyArguments().MustHaveHappened();
+        }
     }
 }

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Diagnostics;
 using FluentAssertions;
 using NUnit.Framework;
+using VersionCommander.Exceptions;
 using VersionCommander.Extensions;
 
 namespace VersionCommander.Tests
@@ -60,7 +61,7 @@ namespace VersionCommander.Tests
             var propertyBag = New.Versioning<FlatPropertyBag>();
             propertyBag.StringProperty = "changed";
 
-            Assert.Throws<NotImplementedException>(() => propertyBag.UndoLastAssignmentTo(prop => prop.StringProperty.Length));
+            Assert.Throws<UntrackedObjectException>(() => propertyBag.UndoLastAssignmentTo(prop => prop.StringProperty.Length));
         }
 
         //attempting to rollback child with no setter?
@@ -125,7 +126,7 @@ namespace VersionCommander.Tests
 
             parent.SpecialChild.StringProperty = "ChildStringey";
 
-            Assert.Throws<NotImplementedException>(() => parent.UndoLastAssignmentTo(x => x.SpecialChild.StringProperty));
+            Assert.Throws<UntrackedObjectException>(() => parent.UndoLastAssignmentTo(x => x.SpecialChild.StringProperty));
         }
         
         [Test]

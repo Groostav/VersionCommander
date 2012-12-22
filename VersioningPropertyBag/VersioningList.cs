@@ -147,12 +147,12 @@ namespace VersionCommander
             get { return _versionDeltas; } 
         }
 
-        public object Get(PropertyInfo targetProperty)
+        public object Get(PropertyInfo targetProperty, long version)
         {
             throw new NotImplementedException("this call shouldn't have been made by anybody, as list props are immutable");
         }
 
-        public void Set(PropertyInfo targetProperty, object value)
+        public void Set(PropertyInfo targetProperty, object value, long version)
         {
             throw new NotImplementedException("this call shouldn't have been made by anybody, as list props are immutable");
         }
