@@ -130,14 +130,14 @@ namespace VersionCommander.Tests
         [Test]
         public void messing_around_with_autoamppers_cloneing_functionality()
         {
-            var firstChild = new FlatPropertyBag() {County = 4, Stringey = "I remember this C#..."};
-            var secondChild = new FlatPropertyBag() {County = 5, Stringey = "deeply nested object initializer nonsense"};
+            var firstChild = new FlatPropertyBag() {IntProperty = 4, StringProperty = "I remember this C#..."};
+            var secondChild = new FlatPropertyBag() {IntProperty = 5, StringProperty = "deeply nested object initializer nonsense"};
             var childList = new List<FlatPropertyBag>() {firstChild, secondChild};
 
             var sample = new DeepPropertyBag()
             {
                 ChildBags = childList,
-                SpecialChild = new FlatPropertyBag() { County = 6, Stringey = "Sigh, I wish there were a better way" },
+                SpecialChild = new FlatPropertyBag() { IntProperty = 6, StringProperty = "Sigh, I wish there were a better way" },
                 Stringey = "Newed"
             };
 

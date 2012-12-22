@@ -6,7 +6,7 @@ using AutoMapper;
 
 namespace VersionCommander.Tests
 {
-    [DebuggerDisplay("DeepPropertyBag : Stringey = {Stringey}")]
+    [DebuggerDisplay("DeepPropertyBag : StringProperty = {StringProperty}")]
     public class DeepPropertyBag : ICloneable, IEquatable<DeepPropertyBag>, IVersionablePropertyBag
     {
         public virtual FlatPropertyBag SpecialChild { get; set; }
@@ -25,11 +25,12 @@ namespace VersionCommander.Tests
         }
     }
 
-    [DebuggerDisplay("FlatPropertyBag : Stringey = {Stringey}")]
+    [DebuggerDisplay("FlatPropertyBag : StringProperty = {StringProperty}")]
     public class FlatPropertyBag : ICloneable, IEquatable<FlatPropertyBag>, IVersionablePropertyBag
     {
-        public virtual string Stringey { get; set; }
-        public virtual int County { get; set; }
+        public virtual string StringProperty { get; set; }
+        public virtual int IntProperty { get; set; }
+        public virtual string PropWithoutSetter { get { return StringProperty; } }
 
         public object Clone()
         {
@@ -42,7 +43,7 @@ namespace VersionCommander.Tests
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
-            return string.Equals(Stringey, other.Stringey) && County == other.County;
+            return string.Equals(StringProperty, other.StringProperty) && IntProperty == other.IntProperty;
         }
 
         public override bool Equals(object obj)
@@ -57,8 +58,8 @@ namespace VersionCommander.Tests
         {
             unchecked
             {
-                int hashCode = (Stringey != null ? Stringey.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ County;
+                int hashCode = (StringProperty != null ? StringProperty.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ IntProperty;
                 return hashCode;
             }
         }

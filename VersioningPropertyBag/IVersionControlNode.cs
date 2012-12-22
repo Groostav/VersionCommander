@@ -12,6 +12,7 @@ namespace VersionCommander
     {
         void RollbackTo(long ticks);
         void UndoLastAssignmentTo<TTarget>(Expression<Func<TSubject, TTarget>> targetSite);
+        void RedoLastAssignmentTo<TTarget>(Expression<Func<TSubject, TTarget>> targetSite);
 
         TSubject WithoutVersionControl();
 

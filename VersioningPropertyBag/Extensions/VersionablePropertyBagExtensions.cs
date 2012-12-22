@@ -8,13 +8,6 @@ namespace VersionCommander.Extensions
     // ReSharper disable ExpressionIsAlwaysNull -- so if its not suspicious its always null huh :\
     public static class VersionablePropertyBagExtensions
     {
-        public static IVersionController<TSubject> VersionControl<TSubject>(this TSubject subject) 
-            where TSubject : IVersionablePropertyBag
-        {
-            var cleanSubject = CheckAndTryCast<IVersionController<TSubject>>(subject);
-            return cleanSubject;
-        }
-
         public static TSubject WithoutModificationsPast<TSubject>(this TSubject subject, long ticks)
             where TSubject : IVersionablePropertyBag
         {
@@ -23,17 +16,27 @@ namespace VersionCommander.Extensions
         }
 
         public static void UndoLastAssignmentTo<TSubject, TReturnable>(this TSubject subject, 
-                                                                      Expression<Func<TSubject, TReturnable>> propertyPointer)
+                                                                       Expression<Func<TSubject, TReturnable>> propertyPointer)
             where TSubject : IVersionablePropertyBag
         {
             var cleanSubject = CheckAndCast<IVersionController<TSubject>>(subject);
             cleanSubject.UndoLastAssignmentTo(propertyPointer);
         }
+
         public static void RedoLastAssignmentTo<TSubject, TReturnable>(this TSubject subject,
                                                                        Expression<Func<TSubject, TReturnable>> propertyPointer)
             where TSubject : IVersionablePropertyBag
         {
-            throw new NotImplementedException();
+            var cleanSubject = CheckAndCast<IVersionController<TSubject>>(subject);
+            cleanSubject.RedoLastAssignmentTo(propertyPointer);
+        }
+
+        #region infrastruture extensions
+        public static IVersionController<TSubject> VersionControl<TSubject>(this TSubject subject)
+            where TSubject : IVersionablePropertyBag
+        {
+            var cleanSubject = CheckAndTryCast<IVersionController<TSubject>>(subject);
+            return cleanSubject;
         }
 
         internal static IVersionControlNode VersionControlNode<TSubject>(this TSubject node)
@@ -54,5 +57,7 @@ namespace VersionCommander.Extensions
             if (subject == null) { throw new ArgumentNullException("subject"); }
             return subject is TDesired ? (TDesired)subject : default(TDesired);
         }
+
+        #endregion
     }
 }

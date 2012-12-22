@@ -1,38 +1,41 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.Linq;
-using System.Reflection;
 using FakeItEasy;
 using FluentAssertions;
 using Machine.Specifications;
 using NUnit.Framework;
+using VersionCommander.Exceptions;
 using VersionCommander.Extensions;
 
+// ReSharper disable InconsistentNaming -- test method names do not comply with naming convention
+#pragma warning disable 169 // -- MSpec static test methods are unused
 namespace VersionCommander.Tests
 {
-    //blegh, resharper doesnt see it, and these tests are clumsy. 
+    //blegh, resharper doesnt see it, and these tests are clumsy. h
     //I might use this for the integrationee stuff, but for an object as annoyingly complex
     //as InterceptedPropertyBagVersionController I might just use NUnit + Fluent Assertions.
     [Subject("user creates a ")]
     public class when_creating_version_controllers
     {
-        private static FlatPropertyBag baseObject;
-        private static PropertyVersionController<FlatPropertyBag> controller;
+        private static FlatPropertyBag _baseObject;
+        private static PropertyVersionController<FlatPropertyBag> _controller;
         private static string _result = "Unassigned";
-        private static long postConstruction;
+        private static long _postConstruction;
 
         Establish context = () => 
         {
-            baseObject = new FlatPropertyBag();
-            controller = new PropertyVersionController<FlatPropertyBag>(baseObject,
+            _baseObject = new FlatPropertyBag();
+            _controller = new PropertyVersionController<FlatPropertyBag>(_baseObject,
                                                                        TestHelper.DefaultCloneFactoryFor<FlatPropertyBag>(),
                                                                        TestHelper.EmptyChangeSet());
-            postConstruction = Stopwatch.GetTimestamp();
+            _postConstruction = Stopwatch.GetTimestamp();
         };
 
         Because of = () =>
         {
-            controller.Set(baseObject.PropertyInfoFor(x => x.Stringey), "New value!!");
-            _result = controller.GetVersionAt(postConstruction).Stringey;
+            _controller.Set(_baseObject.PropertyInfoFor(x => x.StringProperty), "New value!!");
+            _result = _controller.GetVersionAt(_postConstruction).StringProperty;
         };
 
         It should_not_have_the_new_value_for_the_result = () => _result.Should().NotBe("New value!!");
@@ -54,7 +57,7 @@ namespace VersionCommander.Tests
             const string changedValue = "Change!";
 
             //act
-            versioningFlatBag.Set(baseObject.PropertyInfoFor(x => x.Stringey), changedValue);
+            versioningFlatBag.Set(baseObject.PropertyInfoFor(x => x.StringProperty), changedValue);
 
             //assert
             versioningFlatBag.Mutations.Should().ContainSingle(mutation => changedValue.Equals(mutation.Arguments.Single()) );
@@ -72,12 +75,12 @@ namespace VersionCommander.Tests
             var changedValue = "Change!";
 
             //act
-            versioningFlatBag.Set(baseObject.PropertyInfoFor(x => x.Stringey), changedValue);
+            versioningFlatBag.Set(baseObject.PropertyInfoFor(x => x.StringProperty), changedValue);
             var original = versioningFlatBag.GetVersionAt(constructionTimeStamp);
 
             //assert
             original.Should().NotBeNull();
-            original.Stringey.Should().Be(null);
+            original.StringProperty.Should().Be(null);
         }
 
         [Test]
@@ -85,26 +88,20 @@ namespace VersionCommander.Tests
         {
             //setup
             var baseObject = new FlatPropertyBag();
-            var targetSite = baseObject.PropertyInfoFor(x => x.Stringey).GetSetMethod();
+            var targetSite = baseObject.PropertyInfoFor(x => x.StringProperty).GetSetMethod();
             const int targetVersion = 2;
             const string targetVersionValue = "Two!";
 
-            var changeSet = new[]
-                                {
-                                    new TimestampedPropertyVersionDelta("One",              targetSite,  targetVersion - 1),
-                                    new TimestampedPropertyVersionDelta(targetVersionValue, targetSite,  targetVersion),
-                                    new TimestampedPropertyVersionDelta("Three",            targetSite,  targetVersion + 1)
-                                };
+            var changeSet = TestHelper.ChangeSet(new[] {"One", targetVersionValue, "Three"},
+                                                 Enumerable.Repeat(targetSite, 3),
+                                                 new[] {targetVersion - 1L, targetVersion, targetVersion + 1L});
             
-
             var versioningFlatBag = new PropertyVersionController<FlatPropertyBag>(baseObject,
                                                                                    TestHelper.DefaultCloneFactoryFor<FlatPropertyBag>(),
-                                                                                   TestHelper.ChangeSet(new[] { "One", targetVersionValue, "Three" }, 
-                                                                                                        Enumerable.Repeat(targetSite, 3);, 
-                                                                                                        new[] { targetVersion - 1L, targetVersion, targetVersion + 1L }));
+                                                                                   changeSet);
 
             //act
-            var retrievedVersion = versioningFlatBag.GetVersionAt(targetVersion).Stringey;
+            var retrievedVersion = versioningFlatBag.GetVersionAt(targetVersion).StringProperty;
 
             //assert
             retrievedVersion.Should().Be(targetVersionValue);
@@ -115,7 +112,7 @@ namespace VersionCommander.Tests
         {
             //setup
             var baseObject = new FlatPropertyBag();
-            var targetSite = baseObject.PropertyInfoFor(x => x.Stringey).GetSetMethod();
+            var targetSite = baseObject.PropertyInfoFor(x => x.StringProperty).GetSetMethod();
             const int targetVersion = 1;
 
             var versioningFlatBag = new PropertyVersionController<FlatPropertyBag>(baseObject,
@@ -133,16 +130,13 @@ namespace VersionCommander.Tests
         {
             //setup
             var baseObject = new FlatPropertyBag();
-            var targetSite = baseObject.PropertyInfoFor(x => x.Stringey).GetSetMethod();
+            var targetSite = baseObject.PropertyInfoFor(x => x.StringProperty).GetSetMethod();
             const int targetVersion = 2;
             const string targetVersionValue = "Two!";
 
-            var changeSet = new[]
-                                {
-                                    new TimestampedPropertyVersionDelta("One",              targetSite,  targetVersion - 1),
-                                    new TimestampedPropertyVersionDelta(targetVersionValue, targetSite,  targetVersion),
-                                    new TimestampedPropertyVersionDelta("Three",            targetSite,  targetVersion + 1)
-                                };
+            var changeSet = TestHelper.ChangeSet(new[] { "One", targetVersionValue, "Three" },
+                                                 Enumerable.Repeat(targetSite, 3),
+                                                 new[] { targetVersion - 1L, targetVersion, targetVersion + 1L });
 
             var versioningFlatBag = new PropertyVersionController<FlatPropertyBag>(baseObject,
                                                                                    TestHelper.DefaultCloneFactoryFor<FlatPropertyBag>(),
@@ -152,6 +146,73 @@ namespace VersionCommander.Tests
 
             //assert
             versioningFlatBag.Get(targetSite.GetParentProperty()).Should().Be(targetVersionValue);
+        }
+
+        [Test]
+        public void when_undoing_assignment_to_child()
+        {
+            //setup
+            var baseObject = new FlatPropertyBag();
+            var targetSite = baseObject.PropertyInfoFor(x => x.StringProperty).GetSetMethod();
+            const int targetVersion = 2;
+            const string targetValue = "Two!";
+
+            var changeSet = TestHelper.ChangeSet(new[] { "One", targetValue, "Three" },
+                                                 Enumerable.Repeat(targetSite, 3),
+                                                 new[] { targetVersion - 1L, targetVersion, targetVersion + 1L });
+
+            var versioningFlatBag = new PropertyVersionController<FlatPropertyBag>(baseObject,
+                                                                                   TestHelper.DefaultCloneFactoryFor<FlatPropertyBag>(),
+                                                                                   changeSet);
+            //act
+            versioningFlatBag.UndoLastAssignmentTo(self => self.StringProperty);
+
+            //assert
+            versioningFlatBag.Get(targetSite.GetParentProperty()).Should().Be(targetValue);
+        }
+
+        [Test]
+        public void when_undoing_assignment_to_grandchild()
+        {
+            //setup
+            var baseObject = new DeepPropertyBag();
+            var childObject = A.Fake<FlatPropertyBag>();
+
+            var versioningFlatBag = new PropertyVersionController<DeepPropertyBag>(baseObject,
+                                                                                   TestHelper.DefaultCloneFactoryFor<DeepPropertyBag>(),
+                                                                                   TestHelper.ChangeSet(childObject, baseObject.PropertyInfoFor(x => x.SpecialChild).GetSetMethod(), 1));
+            //act & assert
+            var caught = Assert.Throws<UntrackedObjectException>(() => versioningFlatBag.UndoLastAssignmentTo(self => self.SpecialChild.StringProperty));
+                //intrestingly enough, I can actually get mildly better setup-act-assert segregation with a nasty try-catch block.
+
+            //assert
+            A.CallTo(() => childObject.StringProperty).WithAnyArguments().MustNotHaveHappened();
+        }
+
+        [Test]
+        public void when_undoing_assignment_to_self()
+        {
+            //setup
+            var baseObject = new DeepPropertyBag();
+
+            var versioningFlatBag = new PropertyVersionController<DeepPropertyBag>(baseObject,
+                                                                                   TestHelper.DefaultCloneFactoryFor<DeepPropertyBag>(),
+                                                                                   TestHelper.EmptyChangeSet());
+            //act & assert
+            var caught = Assert.Throws<UntrackedObjectException>(() => versioningFlatBag.UndoLastAssignmentTo(self => self));
+        }
+
+        [Test]
+        public void when_undoing_assignment_to_property_with_no_setter()
+        {
+            //setup
+            var baseObject = new FlatPropertyBag();
+
+            var versioningFlatBag = new PropertyVersionController<FlatPropertyBag>(baseObject,
+                                                                                   TestHelper.DefaultCloneFactoryFor<FlatPropertyBag>(),
+                                                                                   TestHelper.EmptyChangeSet());
+            //act & assert
+            var caught = Assert.Throws<UntrackedObjectException>(() => versioningFlatBag.UndoLastAssignmentTo(self => self.PropWithoutSetter));
         }
 
 
@@ -165,8 +226,8 @@ namespace VersionCommander.Tests
         {
             //setup
             var baseObject = new FlatPropertyBag();
-            var stringPropInfo = baseObject.PropertyInfoFor(x => x.Stringey);
-            var countPropInfo = baseObject.PropertyInfoFor(x => x.County);
+            var stringPropInfo = baseObject.PropertyInfoFor(x => x.StringProperty);
+            var countPropInfo = baseObject.PropertyInfoFor(x => x.IntProperty);
             var versioningFlatBag = new PropertyVersionController<FlatPropertyBag>(baseObject,
                                                                                    TestHelper.DefaultCloneFactoryFor<FlatPropertyBag>(),
                                                                                    TestHelper.EmptyChangeSet());
@@ -202,7 +263,7 @@ namespace VersionCommander.Tests
         {
             //setup
             var baseObject = new FlatPropertyBag();
-            var targetSite = baseObject.PropertyInfoFor(x => x.Stringey).GetSetMethod();
+            var targetSite = baseObject.PropertyInfoFor(x => x.StringProperty).GetSetMethod();
             const string originalValue = "One";
             const int targetVersion = 1;
 
@@ -211,7 +272,7 @@ namespace VersionCommander.Tests
                                                                                    TestHelper.ChangeSet(originalValue, targetSite, targetVersion));
             //act
             var clone = versioningFlatBag.GetCurrentVersion();
-            clone.Stringey = "something New";
+            clone.StringProperty = "something New";
 
             //assert
             versioningFlatBag.Get(targetSite.GetParentProperty()).Should().Be(originalValue);

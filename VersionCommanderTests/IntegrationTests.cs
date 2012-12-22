@@ -15,11 +15,11 @@ namespace VersionCommander.Tests
         public void when_assigning_field_value_should_appear_persisted()
         {
             var propertyBag = New.Versioning<FlatPropertyBag>();
-            var expected = "new Stringey!";
+            var expected = "new StringProperty!";
 
-            propertyBag.Stringey = expected;
+            propertyBag.StringProperty = expected;
 
-            Assert.That(propertyBag.Stringey, Is.EqualTo(expected));
+            Assert.That(propertyBag.StringProperty, Is.EqualTo(expected));
         }
 
         [Test]
@@ -29,11 +29,11 @@ namespace VersionCommander.Tests
 
             var postConstruction = Stopwatch.GetTimestamp();
 
-            var given = "new Stringey!";
+            var given = "new StringProperty!";
 
-            propertyBag.Stringey = given;
+            propertyBag.StringProperty = given;
 
-            Assert.That(propertyBag.WithoutModificationsPast(postConstruction).Stringey, Is.Null);
+            Assert.That(propertyBag.WithoutModificationsPast(postConstruction).StringProperty, Is.Null);
         }
 
         [Test]
@@ -49,18 +49,18 @@ namespace VersionCommander.Tests
         public void when_undoing_a_specific_property_the_result_should_have_the_previous_value()
         {
             var propertyBag = New.Versioning<FlatPropertyBag>();
-            propertyBag.Stringey = "changed";
-            propertyBag.UndoLastAssignmentTo(prop => prop.Stringey);
-            propertyBag.Stringey.Should().BeNull();
+            propertyBag.StringProperty = "changed";
+            propertyBag.UndoLastAssignmentTo(prop => prop.StringProperty);
+            propertyBag.StringProperty.Should().BeNull();
         }
 
         [Test]
         public void should_throw_when_attempting_to_rollback_grandchild_object()
         {
             var propertyBag = New.Versioning<FlatPropertyBag>();
-            propertyBag.Stringey = "changed";
+            propertyBag.StringProperty = "changed";
 
-            Assert.Throws<NotImplementedException>(() => propertyBag.UndoLastAssignmentTo(prop => prop.Stringey.Length));
+            Assert.Throws<NotImplementedException>(() => propertyBag.UndoLastAssignmentTo(prop => prop.StringProperty.Length));
         }
 
         //attempting to rollback child with no setter?
@@ -73,12 +73,12 @@ namespace VersionCommander.Tests
 
             var sample = New.Versioning<FlatPropertyBag>(bag =>
                              {
-                                 bag.County = expectedCounty;
-                                 bag.Stringey = expectedStringey;
+                                 bag.IntProperty = expectedCounty;
+                                 bag.StringProperty = expectedStringey;
                              });
 
-            sample.County.Should().Be(expectedCounty);
-            sample.Stringey.Should().Be(expectedStringey);
+            sample.IntProperty.Should().Be(expectedCounty);
+            sample.StringProperty.Should().Be(expectedStringey);
 
             sample.VersionControlNode().Mutations.Should().HaveCount(2);
         }
@@ -123,9 +123,9 @@ namespace VersionCommander.Tests
                              bag.SpecialChild = new FlatPropertyBag();
                          });
 
-            parent.SpecialChild.Stringey = "ChildStringey";
+            parent.SpecialChild.StringProperty = "ChildStringey";
 
-            Assert.Throws<NotImplementedException>(() => parent.UndoLastAssignmentTo(x => x.SpecialChild.Stringey));
+            Assert.Throws<NotImplementedException>(() => parent.UndoLastAssignmentTo(x => x.SpecialChild.StringProperty));
         }
         
         [Test]
@@ -137,12 +137,12 @@ namespace VersionCommander.Tests
                          });
             var timeOfConstruction = Stopwatch.GetTimestamp();
 
-            sample.SpecialChild.Stringey = "ChildStringey";
+            sample.SpecialChild.StringProperty = "ChildStringey";
             sample.Stringey = "Parent Stringy";
 
             var copy = sample.WithoutModificationsPast(timeOfConstruction);
             copy.Stringey.Should().BeNull();
-            copy.SpecialChild.Stringey.Should().BeNull();
+            copy.SpecialChild.StringProperty.Should().BeNull();
         }        
 
         //get grand-fathering working

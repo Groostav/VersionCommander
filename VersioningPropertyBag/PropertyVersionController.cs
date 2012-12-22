@@ -5,6 +5,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using Castle.Core.Internal;
+using VersionCommander.Exceptions;
 using VersionCommander.Extensions;
 
 namespace VersionCommander
@@ -80,19 +81,42 @@ namespace VersionCommander
                 nextMessageChainLink = (nextMessageChainLink as MemberExpression).Expression;
             }
 
-            if (unwoundMessageChain.Count != 1)
+            if (unwoundMessageChain.Count > 1)
+            {                
+                throw new UntrackedObjectException(string.Format("Cannot undo assignments to properties of child objects. If that child is itself versionable, " +
+                                                                 "invoke {0}() on the child directly",
+                                                                 MethodInfoExtensions.GetMethodInfo(() => UndoLastAssignmentTo<TTarget>(null)).Name));
+            }
+            else if (unwoundMessageChain.Count < 1)
             {
-                throw new NotImplementedException("Dont yet support branching down from a parent to a child, @feature request it?");
+                throw new UntrackedObjectException(string.Format("Cannot undo assignments to versioning objects via {0}(). Did you mean to use {1}()?",
+                                                                 MethodInfoExtensions.GetMethodInfo(() => UndoLastAssignmentTo<TTarget>(null)).Name,
+                                                                 MethodInfoExtensions.GetMethodInfo(() => RollbackTo(-1)).Name));
             }
 
             var targetMember = unwoundMessageChain.Dequeue() as PropertyInfo;
 
             if (targetMember == null)
             {
-                throw new NotImplementedException();
+                throw new UntrackedObjectException(string.Format("Could not determine target member to rollback. Best candidate was {0} but it is not a property.",
+                                                                 targetMember.Name));
+            }
+
+            var targetSetter = targetMember.GetSetMethod();
+
+            if (targetSetter == null)
+            {
+                throw new UntrackedObjectException(string.Format("Could not find a setter for the property {0}, thus it cannot be versioned",
+                                                                 targetSite.Name));
             }
 
             _mutations.Remove(_mutations.Last(mutation => mutation.TargetSite == targetMember.GetSetMethod()));
+        }
+
+
+        public void RedoLastAssignmentTo<TTarget>(Expression<Func<TSubject, TTarget>> targetSite)
+        {
+            throw new NotImplementedException();
         }
 
         public IVersionControlNode CurrentDepthCopy()
