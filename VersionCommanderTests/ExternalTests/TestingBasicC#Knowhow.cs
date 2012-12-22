@@ -5,22 +5,19 @@ using FakeItEasy;
 using FluentAssertions;
 using NUnit.Framework;
 using Castle.DynamicProxy;
+using VersionCommander.Tests.TestingAssists;
 
-namespace VersionCommander.Tests
+namespace VersionCommander.Tests.ExternalTests
 {
     public class TestingBasicCSharpKnowhow
     {
-        //-> MemberInfo
-        // |-> PropertyInfo (what _members are)
-        // |-> MethodBase
-        //   |-> MethodInfo (what Invocation.Method is)
-
-        //actually kind've bummed that for all C#s type inferance it couldn't figure that out. 
-        //also bummed that TargetType is null, srsly what good is something like that? I blame Hamilton.
 
          public static class ChoosingOnMultipleGenericMethodsAvailable
          {
              //compile time exception: method with the same signature already delcared, duh.
+                //more specifically, Eric Lippart has a blog post on this stuff: Generic type constraints are not considered in the compilers search for signatures.
+                //http://blogs.msdn.com/b/ericlippert/archive/2009/12/10/constraints-are-not-part-of-the-signature.aspx
+
 //             public static TSubject PickMe<TSubject>()
 //                 where TSubject : new()
 //             {

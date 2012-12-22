@@ -8,10 +8,11 @@ using VersionCommander.Extensions;
 
 namespace VersionCommander
 {
+    [ThereBeDragons("No tests, no uses, methods that thrni")]
     internal class VersioningList<TElement> : IList<TElement>, IVersionControlNode, ICloneable
         where TElement : IVersionablePropertyBag
     {
-        public void InternalRollback(long ticks)
+        public void RollbackTo(long ticks)
         {
             throw new NotImplementedException();
         }
@@ -22,6 +23,7 @@ namespace VersionCommander
         }
 
         public IList<IVersionControlNode> Children { get; set; }
+        public IEnumerable<IVersionControlNode> AllDescendents { get {throw new NotImplementedException();} private set {throw new NotImplementedException();} }
         public IVersionControlNode Parent { get; set; }
 
         private readonly IList<TElement> _backingList;
@@ -135,11 +137,6 @@ namespace VersionCommander
         {
             visitor.Invoke(this);
             Children.ForEach(visitor.Invoke);
-        }
-
-        public TResult Accept<TResult>(Func<IVersionControlNode, TResult> visitor)
-        {
-            throw new NotImplementedException();
         }
 
         public IList<TimestampedPropertyVersionDelta> Mutations 

@@ -73,10 +73,12 @@
     <Compile Include="PropertyVersionControllerFixture.cs" />
     <Compile Include="MethodInfoExtensionsTesting.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TestHelper.cs" />
-    <Compile Include="TestingBasicC#Knowhow.cs" />
-    <Compile Include="TestingBuusMementoPackage.cs" />
-    <Compile Include="TestPropertyBags.cs" />
+    <Compile Include="TestingAssists\FlatPropertyBag.cs" />
+    <Compile Include="TestingAssists\TestHelper.cs" />
+    <Compile Include="ExternalTests\TestingBasicC#Knowhow.cs" />
+    <Compile Include="ExternalTests\TestingBuusMementoPackage.cs" />
+    <Compile Include="TestingAssists\DeepPropertyBag.cs" />
+    <Compile Include="UsageDemo.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\VersioningPropertyBag\VersionCommander.csproj">

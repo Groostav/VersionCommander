@@ -6,7 +6,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using VersionCommander.Extensions;
 
-namespace VersionCommander.Tests
+namespace VersionCommander.Tests.TestingAssists
 {
     public static class TestHelper
     {
@@ -41,10 +41,9 @@ namespace VersionCommander.Tests
 
             Debug.Assert(flatMethods.Length == flatVersions.Length && flatVersions.Length == flatValues.Length && flatValues.Length == flatActives.Length);
 
-            foreach(var index in Enumerable.Range(0, flatMethods.Length))
-            {
-                yield return new TimestampedPropertyVersionDelta(flatValues[index], flatMethods[index], flatVersions[index], flatActives[index]);
-            }
+            return Enumerable.Range(0, flatMethods.Length)
+                             .Select(index => new TimestampedPropertyVersionDelta(flatValues[index], flatMethods[index], flatVersions[index], flatActives[index]))
+                             .ToArray(); //never yield return new! those three keywords should be banned when used in succession!
         }
 
         internal static bool IsAction<TActionInput>(this object argument, Action<TActionInput> action)

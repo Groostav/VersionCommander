@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Diagnostics;
 using FluentAssertions;
 using NUnit.Framework;
 using VersionCommander.Exceptions;
 using VersionCommander.Extensions;
+using VersionCommander.Tests.TestingAssists;
 
 namespace VersionCommander.Tests
 {
@@ -95,9 +94,9 @@ namespace VersionCommander.Tests
             sample.Should().NotBeNull();
             sample.SpecialChild.Should().NotBeNull();
 
-            sample.VersionControl().Should().NotBeNull().And.BeAssignableTo<IVersionController<DeepPropertyBag>>();
+            sample.VersionCommand().Should().NotBeNull().And.BeAssignableTo<IVersionController<DeepPropertyBag>>();
             sample.VersionControlNode().Should().NotBeNull().And.BeAssignableTo<IVersionControlNode>();
-            sample.SpecialChild.VersionControl().Should().NotBeNull().And.BeAssignableTo<IVersionController<FlatPropertyBag>>();
+            sample.SpecialChild.VersionCommand().Should().NotBeNull().And.BeAssignableTo<IVersionController<FlatPropertyBag>>();
             sample.SpecialChild.VersionControlNode().Should().NotBeNull().And.BeAssignableTo<IVersionControlNode>();
         } 
 

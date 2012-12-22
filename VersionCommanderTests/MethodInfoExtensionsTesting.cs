@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
 using NUnit.Framework;
@@ -50,6 +51,18 @@ namespace VersionCommander.Tests
 
             methodInfo.Name.Should().Be("StaticTestMethod");
             methodInfo.IsStatic.Should().BeTrue();
+        }
+
+        [Test]
+        public void verify_IsOrderedBy()
+        {
+            var list = new List<int>() {1, 2, 3, 4};
+
+            list.IsOrderedBy(item => item).Should().BeTrue();
+
+            list = new List<int>() {4, 3, 2, 1};
+
+            list.IsOrderedBy(item => item).Should().BeFalse();
         }
     }
 }

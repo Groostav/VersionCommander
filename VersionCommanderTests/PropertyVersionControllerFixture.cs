@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Linq;
 using FakeItEasy;
 using FluentAssertions;
@@ -7,6 +6,7 @@ using Machine.Specifications;
 using NUnit.Framework;
 using VersionCommander.Exceptions;
 using VersionCommander.Extensions;
+using VersionCommander.Tests.TestingAssists;
 
 // ReSharper disable InconsistentNaming -- test method names do not comply with naming convention
 #pragma warning disable 169 // -- MSpec static test methods are unused
@@ -34,7 +34,7 @@ namespace VersionCommander.Tests
         Because of = () =>
         {
             _controller.Set(_baseObject.PropertyInfoFor(x => x.StringProperty), "New value!!", 1);
-            _result = _controller.GetVersionAt(_postConstruction).StringProperty;
+            _result = _controller.WithoutModificationsPast(_postConstruction).StringProperty;
         };
 
         It should_not_have_the_new_value_for_the_result = () => _result.Should().NotBe("New value!!");
@@ -66,7 +66,7 @@ namespace VersionCommander.Tests
         public void when_using_explicit_getter()
         {
             //setup
-            var originalValue = "Original!";
+            const string originalValue = "Original!";
             var baseObject = new FlatPropertyBag() { StringProperty = originalValue };
             var targetSite = baseObject.PropertyInfoFor(x => x.StringProperty).GetSetMethod();
 
@@ -94,7 +94,7 @@ namespace VersionCommander.Tests
 
             //act
             controller.Set(baseObject.PropertyInfoFor(x => x.StringProperty), "Change!", constructionTimeStamp + 1);
-            var retrievedValue = controller.GetVersionAt(constructionTimeStamp);
+            var retrievedValue = controller.WithoutModificationsPast(constructionTimeStamp);
 
             //assert
             retrievedValue.Should().NotBeNull();
@@ -119,7 +119,7 @@ namespace VersionCommander.Tests
                                                                             changeSet);
 
             //act
-            var retrievedVersion = controller.GetVersionAt(targetVersion).StringProperty;
+            var retrievedVersion = controller.WithoutModificationsPast(targetVersion).StringProperty;
 
             //assert
             retrievedVersion.Should().Be(targetVersionValue);
@@ -129,7 +129,7 @@ namespace VersionCommander.Tests
         public void when_rolling_back_to_construction()
         {
             //setup
-            var originalValue = "Original!";
+            const string originalValue = "Original!";
             var baseObject = new FlatPropertyBag() {StringProperty = originalValue};
             var targetSite = baseObject.PropertyInfoFor(x => x.StringProperty).GetSetMethod();
             const int targetVersion = 1;
@@ -281,7 +281,7 @@ namespace VersionCommander.Tests
 
             //assert
             controller.Get(targetSite.GetParentProperty()).Should().Be(targetValue);
-            controller.Mutations.Single(mutation => mutation.TargetSite == targetSite && mutation.Arguments.Single() == targetValue)
+            controller.Mutations.Single(mutation => mutation.TargetSite == targetSite && mutation.Arguments.Single().As<string>() == targetValue)
                                 .IsActive.Should().BeTrue();
         }
       

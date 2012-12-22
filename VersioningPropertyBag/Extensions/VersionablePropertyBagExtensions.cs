@@ -11,10 +11,24 @@ namespace VersionCommander.Extensions
         public static TSubject WithoutModificationsPast<TSubject>(this TSubject subject, long ticks)
             where TSubject : IVersionablePropertyBag
         {
-            var cleanSubject = CheckAndCast <IVersionController<TSubject>>(subject);
-            return cleanSubject.GetVersionAt(ticks);
+            var cleanSubject = CheckAndCast<IVersionController<TSubject>>(subject);
+            return cleanSubject.WithoutModificationsPast(ticks);
         }
 
+
+
+        public static void UndoLastChange<TSubject>(this TSubject subject)
+            where TSubject : IVersionablePropertyBag
+        {
+            var cleanSubject = CheckAndCast<IVersionController<TSubject>>(subject);
+            cleanSubject.UndoLastChange();
+        }
+        public static void UndoLastAssignment<TSubject>(this TSubject subject)
+            where TSubject : IVersionablePropertyBag
+        {
+            var cleanSubject = CheckAndCast<IVersionController<TSubject>>(subject);
+            cleanSubject.UndoLastAssignment();
+        }
         public static void UndoLastAssignmentTo<TSubject, TReturnable>(this TSubject subject, 
                                                                        Expression<Func<TSubject, TReturnable>> propertyPointer)
             where TSubject : IVersionablePropertyBag
@@ -23,6 +37,21 @@ namespace VersionCommander.Extensions
             cleanSubject.UndoLastAssignmentTo(propertyPointer);
         }
 
+
+
+        public static void RedoLastChange<TSubject>(this TSubject subject)
+            where TSubject : IVersionablePropertyBag
+        {
+            var cleanSubject = CheckAndCast<IVersionController<TSubject>>(subject);
+            cleanSubject.RedoLastChange();
+        }
+
+        public static void RedoLastAssignment<TSubject>(this TSubject subject)
+            where TSubject : IVersionablePropertyBag
+        {
+            var cleanSubject = CheckAndCast<IVersionController<TSubject>>(subject);
+            cleanSubject.RedoLastAssignment();
+        }
         public static void RedoLastAssignmentTo<TSubject, TReturnable>(this TSubject subject,
                                                                        Expression<Func<TSubject, TReturnable>> propertyPointer)
             where TSubject : IVersionablePropertyBag
@@ -32,11 +61,16 @@ namespace VersionCommander.Extensions
         }
 
         #region infrastruture extensions
-        public static IVersionController<TSubject> VersionControl<TSubject>(this TSubject subject)
+        public static IVersionController<TSubject> VersionCommand<TSubject>(this TSubject subject)
             where TSubject : IVersionablePropertyBag
         {
             var cleanSubject = CheckAndTryCast<IVersionController<TSubject>>(subject);
             return cleanSubject;
+        }
+        public static bool IsUnderVersionCommand<TSubject>(this TSubject subject)
+            where TSubject : IVersionablePropertyBag
+        {
+            return CheckAndTryCast<IVersionController<TSubject>>(subject) != null;
         }
 
         internal static IVersionControlNode VersionControlNode<TSubject>(this TSubject node)

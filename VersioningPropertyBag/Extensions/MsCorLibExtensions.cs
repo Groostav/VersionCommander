@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace VersionCommander.Extensions
@@ -16,6 +17,19 @@ namespace VersionCommander.Extensions
             {
                 collection.Add(item);
             }
+        }
+
+        public static bool IsOrderedBy<TElement, TKey>(this IEnumerable<TElement> source,
+                                                       Func<TElement, TKey> keySelector)
+            where TKey : IComparable<TKey>
+        {
+            var sourceCopy = source.ToArray();
+
+            var result = Enumerable.Range(0, sourceCopy.Length - 1)
+                                   .Aggregate(seed:true, func:(current, index) => current & 
+                                              keySelector(sourceCopy[index]).CompareTo(keySelector(sourceCopy[index + 1])) <= 0);
+
+            return result;
         }
     }
 }
