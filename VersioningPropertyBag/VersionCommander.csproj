@@ -54,6 +54,7 @@
     <Compile Include="ICloneable.cs" />
     <Compile Include="IImmutable.cs" />
     <Compile Include="IVersionablePropertyBag.cs" />
+    <Compile Include="IVersionController.cs" />
     <Compile Include="IVersionControlNode.cs" />
     <Compile Include="Extensions\MethodInfoExtensions.cs" />
     <Compile Include="Extensions\MsCorLibExtensions.cs" />
@@ -67,6 +68,7 @@
     <Compile Include="Exceptions\VersionDeltaNotFoundException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Interceptors\SubjectPropertyInterceptor.cs" />
+    <Compile Include="VersionControlNodeBase.cs" />
     <Compile Include="VersioningList.cs" />
     <Compile Include="PropertyVersionController.cs" />
     <Compile Include="Extensions\VersionablePropertyBagExtensions.cs" />

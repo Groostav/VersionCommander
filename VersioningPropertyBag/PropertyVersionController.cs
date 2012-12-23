@@ -52,12 +52,16 @@ namespace VersionCommander
 
         public void UndoLastChange()
         {
-            throw new NotImplementedException();
+            var allMutations = AllDescendents.SelectMany(descendent => descendent.Mutations).Where(mutation => mutation.IsActive).ToArray();
+            //this could be done via the visitor, might be cleaner/faster.
+            var targetMutation = allMutations.Last(item => item.TimeStamp == allMutations.Max(candidate => candidate.TimeStamp));
+            targetMutation.IsActive = false;
         }
 
         public void UndoLastAssignment()
         {
-            throw new NotImplementedException();
+            var targetMutation = Mutations.Last(item => item.IsActive);
+            targetMutation.IsActive = false;
         }
 
         [ThereBeDragons]
@@ -81,9 +85,18 @@ namespace VersionCommander
             targetMutation.IsActive = false;
         }
 
+        [ThereBeDragons("Oh god, expected behavior, what are you?")]
+        //okokokok
+        //You say undoAssignmentTo(targetProp) 3x
+        //Then you asy UndoLastChange
+            //RedoLastChange should simply revert whatever UndoLastChange did
+            //Dah? so: implementation.
         public void RedoLastChange()
         {
-            throw new NotImplementedException();
+            var candidateMutations = AllDescendents.SelectMany(descendent => descendent.Mutations).Where(mutation => ! mutation.IsActive).ToArray();
+            if( ! candidateMutations.Any()) throw new NotImplementedException();
+            var mostrecent = candidateMutations.WithMax(mutation => mutation.TimeStamp);
+            if (!mostrecent.IsSingle()) throw new NotImplementedException();
         }
 
         public void RedoLastAssignment()
@@ -177,14 +190,14 @@ namespace VersionCommander
         {
             //this is actually just in the controller, I actually need to hit dynamic proxies...
             var clone = New.Versioning<TSubject>(_content, _cloneFactory, Mutations);
-            clone.VersionControlNode().Accept(ScanAndClone);
+            clone.VersionControlNode().Accept(FindAndCloneVersioningChildren);
             clone.VersionControlNode().Accept(node => node.RollbackTo(ticks));
 
             return clone;
         }
 
-        [ThereBeDragons]
-        internal void ScanAndClone(IVersionControlNode node)
+        [ThereBeDragons("This thing doesnt fit anywhere nicely")]
+        internal void FindAndCloneVersioningChildren(IVersionControlNode node)
         {
             Debug.Assert(Mutations.IsOrderedBy(mutation => mutation.TimeStamp));
 
@@ -201,7 +214,7 @@ namespace VersionCommander
                 var cloneVersionNode = versioningChild.VersionControlNode().CurrentDepthCopy();
 
                 //this node has new memory, but its still referencing the original children.
-                cloneVersionNode.Accept(ScanAndClone); //Update those references.
+                cloneVersionNode.Accept(FindAndCloneVersioningChildren); //Update those references.
 
                 Mutations[indexCandidatePair.Key] = new TimestampedPropertyVersionDelta(indexCandidatePair.Value, cloneVersionNode);
             }

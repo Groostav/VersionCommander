@@ -70,6 +70,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="IntegrationTests.cs" />
+    <Compile Include="MsCoreLibExtensionsFixture.cs" />
     <Compile Include="PropertyVersionControllerFixture.cs" />
     <Compile Include="MethodInfoExtensionsTesting.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

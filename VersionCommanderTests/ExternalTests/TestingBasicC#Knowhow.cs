@@ -210,5 +210,20 @@ namespace VersionCommander.Tests.ExternalTests
 
             A.CallTo(() => fake.IntProperty).WithAnyArguments().MustHaveHappened();
         }
+
+        [Test]
+        public void whats_the_behavior_of_group_by_on_empty_set()
+        {
+            var emptySet = new int[0];
+
+            var setOfGroups = emptySet.GroupBy(item => item);
+
+            setOfGroups.Should().BeEmpty();
+            //gah way to dodge the bullet microsoft...
+
+            //I think my expected behavior should be to return an empty set of elements, and to throw when you ask for the key.
+                //stating that the key is the default(TKey), is prooobably fairly safe, but it might result in some empty groups being assigned to things where
+                //that element simply shouldnt exist.
+        }
     }
 }

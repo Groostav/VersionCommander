@@ -19,6 +19,48 @@ namespace VersionCommander.Extensions
             }
         }
 
+        public static IGrouping<TKey, TElement> WithMin<TElement, TKey>(this IEnumerable<TElement> source,
+                                                                        Func<TElement, TKey> keySelector) 
+            where TKey : IComparable<TKey>
+        {
+            return GetGroupingBy(source, keySelector, result => result < 0);
+        }
+
+        public static IGrouping<TKey, TElement> WithMax<TElement, TKey>(this IEnumerable<TElement> source,
+                                                                             Func<TElement, TKey> keySelector)
+            where TKey : IComparable<TKey>
+        {
+            return GetGroupingBy(source, keySelector, result => result > 0);
+        }
+
+        private static IGrouping<TKey, TElement> GetGroupingBy<TElement, TKey>(IEnumerable<TElement> source, 
+                                                                               Func<TElement, TKey> keySelector,    
+                                                                               Func<int, bool> comparator)
+            where TKey : IComparable<TKey>
+        {
+            if (source == null) throw new ArgumentNullException();
+            if (!source.Any()) return new EmptyGrouping<TKey, TElement>();
+
+            var grouping = new ExtremaGrouping<TKey, TElement>(keySelector) {source.First()};
+            foreach (var element in source.Skip(1))
+            {
+                if (comparator(keySelector(element).CompareTo(grouping.Key)))
+                {
+                    grouping = new ExtremaGrouping<TKey, TElement>(keySelector) {element};
+                }
+                else if (keySelector(element).CompareTo(grouping.Key) == 0)
+                {
+                    grouping.Add(element);
+                }
+                else
+                {
+                    continue;
+                }
+            }
+
+            return grouping;
+        }
+
         public static bool IsOrderedBy<TElement, TKey>(this IEnumerable<TElement> source,
                                                        Func<TElement, TKey> keySelector)
             where TKey : IComparable<TKey>

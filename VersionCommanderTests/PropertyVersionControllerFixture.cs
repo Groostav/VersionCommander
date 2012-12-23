@@ -340,7 +340,7 @@ namespace VersionCommander.Tests
             controller.GetCurrentVersion();
             
              //assert
-            A.CallTo(() => childNode.Accept(null)).WhenArgumentsMatch(args => args.Single().IsAction<IVersionControlNode>(controller.ScanAndClone)).MustHaveHappened();
+            A.CallTo(() => childNode.Accept(null)).WhenArgumentsMatch(args => args.Single().IsAction<IVersionControlNode>(controller.FindAndCloneVersioningChildren)).MustHaveHappened();
             A.CallTo(() => childNode.CurrentDepthCopy()).MustHaveHappened();
         }
 
