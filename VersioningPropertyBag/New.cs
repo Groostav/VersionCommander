@@ -34,15 +34,10 @@ namespace VersionCommander.Implementation
                                                               IEnumerable<TimestampedPropertyVersionDelta> existingModifications = null)
             where TSubject : class
         {
-            var repository = new PropertyVersionController<TSubject>(baseObject, cloneFactory, existingModifications);
-
-            //repository.Accept(CloneAndUpdateChildRepos);
-            //the problem is children. the problem is always children.
-            //When you do this it creates a copy with all of the edits made, but any edits that included assignment of controllers to this 
-            //controller must also have this method invoked with them. So I think I need to run through existingModifications, looking for setters
-            //that were made with an argument that is itself versioning, then I need to invoke this method on those discoverd arguments. 
-
-            //note: the interceptedPropertyBagVersionController has to be generic on TSubject or it cant do typed version control things (getVersionAt).
+            var repository = new PropertyVersionController<TSubject>(baseObject, 
+                                                                     cloneFactory, 
+                                                                     existingModifications,
+                                                                     new VisitorFactory());
 
             var subjectInterceptor = new SubjectPropertyInterceptor<TSubject>(repository);
             var versionControlInterceptor = new VersionControlInterceptor<TSubject>(repository);

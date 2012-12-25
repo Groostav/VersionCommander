@@ -4,10 +4,11 @@ using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using VersionCommander.Implementation.Extensions;
+using FakeItEasy;
+using VersionCommander.Implementation;
 using VersionCommander.Implementation.Extensions;
 
-namespace VersionCommander.Implementation.Tests.TestingAssists
+namespace VersionCommander.UnitTests.TestingAssists
 {
     public static class TestHelper
     {
@@ -21,6 +22,11 @@ namespace VersionCommander.Implementation.Tests.TestingAssists
         {
             return new DefaultCloneFactory<TCloneable>();
         } 
+
+        public static IVisitorFactory FakeVisitorFactory()
+        {
+            return A.Fake<IVisitorFactory>();
+        }
 
         public static IEnumerable<TimestampedPropertyVersionDelta> ChangeSet(object value,
                                                                              MethodInfo method,

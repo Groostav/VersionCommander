@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using AutoMapper;
+using VersionCommander.UnitTests.TestingAssists;
 
 namespace VersionCommander.Implementation.Tests.TestingAssists
 {

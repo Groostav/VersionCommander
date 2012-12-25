@@ -9,7 +9,6 @@ namespace VersionCommander.Implementation
 {
     public abstract class VersionControlNodeBase : IVersionControlNode
     {
-
         public IList<IVersionControlNode> Children { get; set; }
         public IVersionControlNode Parent { get; set; }
 
@@ -25,7 +24,7 @@ namespace VersionCommander.Implementation
 
         public abstract IList<TimestampedPropertyVersionDelta> Mutations { get; }
 
-        public abstract object Get(PropertyInfo targetProperty, long version);
+        public abstract object Get(PropertyInfo targetProperty, long version = long.MaxValue);
         public abstract void Set(PropertyInfo targetProperty, object value, long version);
     }
 }

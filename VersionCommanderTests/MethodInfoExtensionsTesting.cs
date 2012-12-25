@@ -3,9 +3,8 @@ using System.Linq;
 using FluentAssertions;
 using NUnit.Framework;
 using VersionCommander.Implementation.Extensions;
-using VersionCommander.Implementation.Extensions;
 
-namespace VersionCommander.Implementation.Tests
+namespace VersionCommander.UnitTests
 {
     [TestFixture]
     public class MethodInfoExtensionsTesting

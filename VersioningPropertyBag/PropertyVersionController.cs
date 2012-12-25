@@ -21,17 +21,20 @@ namespace VersionCommander.Implementation
         private readonly IEnumerable<PropertyInfo> _knownProperties;
         private readonly TSubject _content;
         private readonly ICloneFactory<TSubject> _cloneFactory;
+        private readonly IVisitorFactory _visitorFactory;
 
         public override IList<TimestampedPropertyVersionDelta> Mutations { get { return _mutations; } } 
 
         public PropertyVersionController(TSubject content,
                                          ICloneFactory<TSubject> cloneFactory,
-                                         IEnumerable<TimestampedPropertyVersionDelta> existingChanges)
+                                         IEnumerable<TimestampedPropertyVersionDelta> existingChanges,
+                                         IVisitorFactory visitorFactory)
         {
             Children =  new List<IVersionControlNode>();
             _mutations = new List<TimestampedPropertyVersionDelta>();
             _content = content;
             _cloneFactory = cloneFactory;
+            _visitorFactory = visitorFactory;
 
             if (existingChanges != null)
             {
@@ -44,12 +47,12 @@ namespace VersionCommander.Implementation
 
         public override void RollbackTo(long targetVersion)
         {
-            Accept(new RollbackVisitor(targetVersion));
+            Accept(_visitorFactory.MakeRollbackVisitor(targetVersion));
         }
 
         public void UndoLastChange()
         {
-            Accept(new UndoLastChangeVisitor());
+            Accept(_visitorFactory.MakeVisitor<UndoLastChangeVisitor>());
         }
 
         public void UndoLastAssignment()
@@ -67,7 +70,7 @@ namespace VersionCommander.Implementation
 
         public void RedoLastChange()
         {
-            Accept(new RedoLastChangeVisitor());
+            Accept(_visitorFactory.MakeVisitor<RedoLastChangeVisitor>());
         }
 
         public void RedoLastAssignment()
@@ -160,8 +163,8 @@ namespace VersionCommander.Implementation
         public TSubject WithoutModificationsPast(long ticks)
         {
             var clone = New.Versioning<TSubject>(_content, _cloneFactory, Mutations);
-            clone.VersionControlNode().Accept(new FindAndCopyVersioningChildVisitor());
-            clone.VersionControlNode().Accept(new RollbackVisitor(ticks));
+            clone.VersionControlNode().Accept(_visitorFactory.MakeVisitor<FindAndCopyVersioningChildVisitor>());
+            clone.VersionControlNode().Accept(_visitorFactory.MakeRollbackVisitor(ticks));
 
             return clone;
         }

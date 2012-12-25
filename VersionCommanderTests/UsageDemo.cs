@@ -1,7 +1,8 @@
 ﻿using System;
 using VersionCommander.Implementation;
+using New = VersionCommander.New;
 
-namespace VersionCommander.Tests
+namespace UnitTests
 {
 
     public class UsageDemo
