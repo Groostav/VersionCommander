@@ -1,19 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using VersionCommander.Implementation.Visitors;
 
-namespace VersionCommander
+namespace VersionCommander.Implementation
 {
-    internal interface IVersionControlNode
+    public interface IVersionControlNode
     {
-        void RollbackTo(long ticks);
+        void RollbackTo(long targetVersion);
         IVersionControlNode CurrentDepthCopy();
 
         IList<IVersionControlNode> Children { get; set; }
-        IEnumerable<IVersionControlNode> AllDescendents { get; }
         IVersionControlNode Parent { get; set; }
 
-        void Accept(Action<IVersionControlNode> visitor);
+        void Accept(IPropertyTreeVisitor visitor);
 
         IList<TimestampedPropertyVersionDelta> Mutations { get; }
 

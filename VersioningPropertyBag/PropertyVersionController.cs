@@ -4,18 +4,19 @@ using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using Castle.Core.Internal;
-using VersionCommander.Exceptions;
-using VersionCommander.Extensions;
+using VersionCommander.Implementation.Exceptions;
+using VersionCommander.Implementation.Extensions;
+using VersionCommander.Implementation.Exceptions;
+using VersionCommander.Implementation.Extensions;
+using VersionCommander.Implementation.Visitors;
 
-namespace VersionCommander
+namespace VersionCommander.Implementation
 {
-    internal class PropertyVersionController<TSubject> : VersionControlNodeBase, IVersionController<TSubject> 
+    //I like this pattern thats emerging: use visitors to do the grunt-work and let this class be mainly about handling user intent
+    //and exception refocusing.
+    public class PropertyVersionController<TSubject> : VersionControlNodeBase, IVersionController<TSubject> 
         where TSubject : class
     {
-        public IList<IVersionControlNode> Children { get; set; }
-        public IVersionControlNode Parent { get; set; }
-
         private readonly List<TimestampedPropertyVersionDelta> _mutations;
         private readonly IEnumerable<PropertyInfo> _knownProperties;
         private readonly TSubject _content;
@@ -35,27 +36,20 @@ namespace VersionCommander
             if (existingChanges != null)
             {
                 _mutations.AddRange(existingChanges);
+                //BUG: references to existingChanges are mutable, thus setting another objects changes as active could potentially activate this objects changes.
             }
 
             _knownProperties = typeof (TSubject).GetProperties();
         }
 
-        public override void RollbackTo(long ticks)
+        public override void RollbackTo(long targetVersion)
         {
-            var relatedMutations = _mutations.Where(mutation => mutation.TimeStamp > ticks).ToArray();
-            foreach (var mutation in relatedMutations)
-            {
-                _mutations.Remove(mutation);
-            }
+            Accept(new RollbackVisitor(targetVersion));
         }
-
 
         public void UndoLastChange()
         {
-            var allMutations = AllDescendents.SelectMany(descendent => descendent.Mutations).Where(mutation => mutation.IsActive).ToArray();
-            //this could be done via the visitor, might be cleaner/faster.
-            var targetMutation = allMutations.Last(item => item.TimeStamp == allMutations.Max(candidate => candidate.TimeStamp));
-            targetMutation.IsActive = false;
+            Accept(new UndoLastChangeVisitor());
         }
 
         public void UndoLastAssignment()
@@ -64,20 +58,6 @@ namespace VersionCommander
             targetMutation.IsActive = false;
         }
 
-        [ThereBeDragons]
-        //whats a clean behavior for this. I do not want to write a compiler, but you users need to be able to specify that "undo the thing I did to a child".
-        //lets assert the expression is a 2 car message train. If you want to go further than that, invoke Rollback on the child object since it would need to 
-        //be under version control anyways.
-
-        //this is going to get complex with the List. For that list, It will implement this interface, so whats the behavior there?
-        //I need to allow linqing on the list itself, the value in
-        //unversionedObject.VersioningList.RollbackLastCallto(list => list.Where(Condition).Select(item => item.Child));
-        //the target here is to inv...
-        //no I'd want to force you to use
-        //unversioned.VersioningList.Where(Condition).ForEach(item => item.RollbackLastCallTo(item => item.Child))
-        //so, strictly speaking, what I'd want is simply to allow rollbacks to Add and Remove?
-        //I think thats closest to the interfaces perview...
-
         public void UndoLastAssignmentTo<TTarget>(Expression<Func<TSubject, TTarget>> targetSite)
         {
             var targetMember = GetRequestedMember(targetSite).GetSetMethod();
@@ -85,23 +65,16 @@ namespace VersionCommander
             targetMutation.IsActive = false;
         }
 
-        [ThereBeDragons("Oh god, expected behavior, what are you?")]
-        //okokokok
-        //You say undoAssignmentTo(targetProp) 3x
-        //Then you asy UndoLastChange
-            //RedoLastChange should simply revert whatever UndoLastChange did
-            //Dah? so: implementation.
         public void RedoLastChange()
         {
-            var candidateMutations = AllDescendents.SelectMany(descendent => descendent.Mutations).Where(mutation => ! mutation.IsActive).ToArray();
-            if( ! candidateMutations.Any()) throw new NotImplementedException();
-            var mostrecent = candidateMutations.WithMax(mutation => mutation.TimeStamp);
-            if (!mostrecent.IsSingle()) throw new NotImplementedException();
+            Accept(new RedoLastChangeVisitor());
         }
 
         public void RedoLastAssignment()
         {
-            throw new NotImplementedException();
+            var targetMutation = Mutations.Where(mutation => !mutation.IsActive).WithMax(mutation => mutation.TimeStamp);
+            Debug.Assert(targetMutation.IsSingle());
+            targetMutation.Single().IsActive = true;
         }
 
         public void RedoLastAssignmentTo<TTarget>(Expression<Func<TSubject, TTarget>> targetSite)
@@ -176,9 +149,7 @@ namespace VersionCommander
 
         public override IVersionControlNode CurrentDepthCopy()
         {
-            return new PropertyVersionController<TSubject>(_cloneFactory.CreateCloneOf(_content),
-                                                                         _cloneFactory,
-                                                                         _mutations);
+            return New.Versioning<TSubject>(_content, _cloneFactory, _mutations).VersionControlNode();
         }
 
         public TSubject GetCurrentVersion()
@@ -188,52 +159,11 @@ namespace VersionCommander
        
         public TSubject WithoutModificationsPast(long ticks)
         {
-            //this is actually just in the controller, I actually need to hit dynamic proxies...
             var clone = New.Versioning<TSubject>(_content, _cloneFactory, Mutations);
-            clone.VersionControlNode().Accept(FindAndCloneVersioningChildren);
-            clone.VersionControlNode().Accept(node => node.RollbackTo(ticks));
+            clone.VersionControlNode().Accept(new FindAndCopyVersioningChildVisitor());
+            clone.VersionControlNode().Accept(new RollbackVisitor(ticks));
 
             return clone;
-        }
-
-        [ThereBeDragons("This thing doesnt fit anywhere nicely")]
-        internal void FindAndCloneVersioningChildren(IVersionControlNode node)
-        {
-            Debug.Assert(Mutations.IsOrderedBy(mutation => mutation.TimeStamp));
-
-            //command object vs delegate strikes: I used Mutations.Linq... which referenced this, which got nicely closed in by C# and i recursed infinitely.
-                //moral: command objects give you a little more type safetly.
-
-            var candidatesByIndex = GetCadidatesByIndex(node);
-            //thanks to use of enumerables, this actually consumes very little stack space, meaning I can safely handle fairly large graphs
-                //outside of image/audio processing though I suspect its rare to have multi-meg object trees.
-
-            foreach (var indexCandidatePair in candidatesByIndex)
-            {
-                var versioningChild = indexCandidatePair.Value.Arguments.Single();
-                var cloneVersionNode = versioningChild.VersionControlNode().CurrentDepthCopy();
-
-                //this node has new memory, but its still referencing the original children.
-                cloneVersionNode.Accept(FindAndCloneVersioningChildren); //Update those references.
-
-                Mutations[indexCandidatePair.Key] = new TimestampedPropertyVersionDelta(indexCandidatePair.Value, cloneVersionNode);
-            }
-
-            //refresh candidates, since all mutations are now different and in new memory
-            candidatesByIndex = GetCadidatesByIndex(node);
-
-            var children = candidatesByIndex.GroupBy(mutation => mutation.Value.TargetSite)
-                                            .Select(group => group.Last())
-                                            .Select(mutation => mutation.Value.Arguments.Single().VersionControlNode());
-
-            node.Children = children.ToList();
-        }
-
-        private IEnumerable<KeyValuePair<int, TimestampedPropertyVersionDelta>> GetCadidatesByIndex(IVersionControlNode node)
-        {            
-            return from index in Enumerable.Range(0, node.Mutations.Count) 
-                   where node.Mutations[index].IsSettingVersioningObject() 
-                   select new KeyValuePair<int, TimestampedPropertyVersionDelta>(index, node.Mutations[index]);
         }
 
         public TSubject WithoutVersionControl()
@@ -248,8 +178,14 @@ namespace VersionCommander
 
         public override object Get(PropertyInfo targetProperty, long version = long.MaxValue)
         {
-            return GetVersionOfPropertyAt(targetProperty, version);
+            var lastReturned = _mutations.Where(mutation => mutation.TimeStamp < version && mutation.IsActive)
+                                         .LastOrDefault(mutation => mutation.TargetSite == targetProperty.GetSetMethod());
+
+            return lastReturned != null
+                       ? lastReturned.Arguments.Single()
+                       : targetProperty.GetGetMethod().Invoke(_content, new object[0]);
         }
+
         public override void Set(PropertyInfo targetProperty, object value, long version)
         {
             var targetSite = targetProperty.GetSetMethod();
@@ -257,14 +193,5 @@ namespace VersionCommander
             _mutations.Add(new TimestampedPropertyVersionDelta(value, targetSite, version));
         }
 
-        private object GetVersionOfPropertyAt(PropertyInfo targetProperty, long targetTimestamp)
-        {
-            var lastReturned = _mutations.Where(mutation => mutation.TimeStamp < targetTimestamp && mutation.IsActive)
-                                         .LastOrDefault(mutation => mutation.TargetSite == targetProperty.GetSetMethod());
-
-            return lastReturned != null
-                       ? lastReturned.Arguments.Single()
-                       : targetProperty.GetGetMethod().Invoke(_content, new object[0]);
-        }
     }
 }

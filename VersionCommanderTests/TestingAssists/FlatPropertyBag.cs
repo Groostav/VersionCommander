@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using AutoMapper;
 
-namespace VersionCommander.Tests.TestingAssists
+namespace VersionCommander.Implementation.Tests.TestingAssists
 {
     [DebuggerDisplay("FlatPropertyBag : StringProperty = {StringProperty}")]
     public class FlatPropertyBag : ICloneable, IEquatable<FlatPropertyBag>, IVersionablePropertyBag

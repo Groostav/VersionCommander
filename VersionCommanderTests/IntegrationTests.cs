@@ -2,9 +2,12 @@
 using System.Diagnostics;
 using FluentAssertions;
 using NUnit.Framework;
-using VersionCommander.Exceptions;
-using VersionCommander.Extensions;
-using VersionCommander.Tests.TestingAssists;
+using VersionCommander.Implementation;
+using VersionCommander.Implementation.Exceptions;
+using VersionCommander.Implementation.Extensions;
+using VersionCommander.Implementation.Tests.TestingAssists;
+
+using New = VersionCommander.New;
 
 namespace VersionCommander.Tests
 {

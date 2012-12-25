@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace VersionCommander.Exceptions
+namespace VersionCommander.Implementation.Exceptions
 {
     public class VersionDeltaNotFoundException : Exception
     {

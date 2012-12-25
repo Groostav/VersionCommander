@@ -1,7 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using FluentAssertions;
 using NUnit.Framework;
-using VersionCommander.Extensions;
+using VersionCommander.Implementation.Extensions;
 
 namespace VersionCommander.Tests
 {
@@ -38,6 +39,14 @@ namespace VersionCommander.Tests
 
             maxGroup.Should().HaveCount(2);
             maxGroup.Should().BeEquivalentTo(new[] {2, 2});
+        }
+
+        [Test]
+        public void when_constructing_a_grouping_with_non_zero_comparables()
+        {
+            var act = new Action(() => new Grouping<int, int>(x => x, new[]{1, 2}));
+
+            var message = act.ShouldThrow<NotSupportedException>();
         }
     }
 }

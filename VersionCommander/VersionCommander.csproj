@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{A299AC35-8EBB-48A5-AC58-B7BA89967980}</ProjectGuid>
+    <ProjectGuid>{953B7ED6-E20C-4701-83D6-211EC122608C}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>VersionCommander.Tests</RootNamespace>
-    <AssemblyName>VersionCommander.Tests</AssemblyName>
+    <RootNamespace>VersionCommander</RootNamespace>
+    <AssemblyName>VersionCommander</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -35,64 +35,29 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AutoMapper">
-      <HintPath>..\packages\AutoMapper.2.2.0\lib\net40\AutoMapper.dll</HintPath>
-    </Reference>
-    <Reference Include="Castle.Core, Version=3.1.0.0, Culture=neutral, PublicKeyToken=407dd0808d44fbdc, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="Castle.Core">
       <HintPath>..\packages\Castle.Core.3.1.0\lib\net35\Castle.Core.dll</HintPath>
     </Reference>
-    <Reference Include="FakeItEasy">
-      <HintPath>..\packages\FakeItEasy.1.7.4626.65\lib\NET40\FakeItEasy.dll</HintPath>
-    </Reference>
-    <Reference Include="FluentAssertions">
-      <HintPath>..\packages\FluentAssertions.2.0.0.1\lib\net45\FluentAssertions.dll</HintPath>
-    </Reference>
-    <Reference Include="Machine.Specifications">
-      <HintPath>..\packages\Machine.Specifications.0.5.10\lib\net40\Machine.Specifications.dll</HintPath>
-    </Reference>
-    <Reference Include="Machine.Specifications.Clr4">
-      <HintPath>..\packages\Machine.Specifications.0.5.10\lib\net40\Machine.Specifications.Clr4.dll</HintPath>
-    </Reference>
-    <Reference Include="Machine.Specifications.TDNetRunner">
-      <HintPath>..\packages\Machine.Specifications.0.5.10\lib\net40\Machine.Specifications.TDNetRunner.dll</HintPath>
-    </Reference>
-    <Reference Include="Memento">
-      <HintPath>..\packages\Memento.1.2.1\lib\net40\Memento.dll</HintPath>
-    </Reference>
-    <Reference Include="nunit.framework">
-      <HintPath>..\packages\NUnit.2.6.2\lib\nunit.framework.dll</HintPath>
+    <Reference Include="Castle.Windsor">
+      <HintPath>..\packages\Castle.Windsor.3.1.0\lib\net40\Castle.Windsor.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="IntegrationTests.cs" />
-    <Compile Include="MsCoreLibExtensionsFixture.cs" />
-    <Compile Include="PropertyVersionControllerFixture.cs" />
-    <Compile Include="MethodInfoExtensionsTesting.cs" />
+    <Compile Include="New.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TestingAssists\FlatPropertyBag.cs" />
-    <Compile Include="TestingAssists\TestHelper.cs" />
-    <Compile Include="ExternalTests\TestingBasicC#Knowhow.cs" />
-    <Compile Include="ExternalTests\TestingBuusMementoPackage.cs" />
-    <Compile Include="TestingAssists\DeepPropertyBag.cs" />
-    <Compile Include="UsageDemo.cs" />
+    <Compile Include="VersionablePropertyBagExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\VersionCommander\VersionCommander.csproj">
-      <Project>{953b7ed6-e20c-4701-83d6-211ec122608c}</Project>
-      <Name>VersionCommander</Name>
-    </ProjectReference>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\VersioningPropertyBag\VersionCommander.Implementation.csproj">
       <Project>{44c435db-c392-461b-b92f-2e0c7deb23fa}</Project>
       <Name>VersionCommander.Implementation</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\nuget.targets" />

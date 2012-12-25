@@ -4,15 +4,16 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using Castle.Core.Internal;
-using VersionCommander.Extensions;
+using VersionCommander.Implementation.Extensions;
+using VersionCommander.Implementation.Visitors;
 
-namespace VersionCommander
+namespace VersionCommander.Implementation
 {
     [ThereBeDragons("No tests, no uses, methods that thrni")]
-    internal class VersioningList<TElement> : IList<TElement>, IVersionControlNode, ICloneable
+    public class VersioningList<TElement> : IList<TElement>, IVersionControlNode, ICloneable
         where TElement : IVersionablePropertyBag
     {
-        public void RollbackTo(long ticks)
+        public void RollbackTo(long targetVersion)
         {
             throw new NotImplementedException();
         }
@@ -133,10 +134,10 @@ namespace VersionCommander
         #endregion
 
         #region IVersionControlNode
-        public void Accept(Action<IVersionControlNode> visitor)
+        public void Accept(IPropertyTreeVisitor visitor)
         {
-            visitor.Invoke(this);
-            Children.ForEach(visitor.Invoke);
+            visitor.RunOn(this);
+            Children.ForEach(node => node.Accept(visitor));
         }
 
         public IList<TimestampedPropertyVersionDelta> Mutations 

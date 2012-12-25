@@ -3,26 +3,23 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Castle.Core.Internal;
+using VersionCommander.Implementation.Visitors;
 
-namespace VersionCommander
+namespace VersionCommander.Implementation
 {
-    internal abstract class VersionControlNodeBase : IVersionControlNode
+    public abstract class VersionControlNodeBase : IVersionControlNode
     {
-        public IEnumerable<IVersionControlNode> AllDescendents 
-        {
-            get { return new[]{this}.Union(Children.SelectMany(child => child.AllDescendents)); }
-        }
 
         public IList<IVersionControlNode> Children { get; set; }
         public IVersionControlNode Parent { get; set; }
 
-        public void Accept(Action<IVersionControlNode> visitor)
+        public void Accept(IPropertyTreeVisitor visitor)
         {
-            visitor.Invoke(this);
+            visitor.RunOn(this);
             Children.ForEach(child => child.Accept(visitor));
         }
 
-        public abstract void RollbackTo(long ticks);
+        public abstract void RollbackTo(long targetVersion);
 
         public abstract IVersionControlNode CurrentDepthCopy();
 

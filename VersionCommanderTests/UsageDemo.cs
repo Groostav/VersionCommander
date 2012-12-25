@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using VersionCommander.Extensions;
+using VersionCommander.Implementation;
 
 namespace VersionCommander.Tests
 {
@@ -20,9 +16,14 @@ namespace VersionCommander.Tests
 
         public delegate void UndoHandler(object sender, EventArgs args);
 
-        public event UndoHandler UsedHitCtrlZ;
+        private event UndoHandler _userHitCtrlZ;
+        public event UndoHandler UserHitCtrlZ
+        {
+            add { _userHitCtrlZ += value; }
+            remove { _userHitCtrlZ -= value; }
+        }
 
-        private DomainModel _domainModel;
+        private readonly DomainModel _domainModel;
 
         public UsageDemo()
         {
@@ -32,6 +33,11 @@ namespace VersionCommander.Tests
         public void UsingVersionCommander(object sender, EventArgs args)
         {
             _domainModel.UndoLastAssignment();
+        }
+
+        public void ElsewhereInVancouver()
+        {
+            UserHitCtrlZ += UsingVersionCommander;
         }
     }
 }

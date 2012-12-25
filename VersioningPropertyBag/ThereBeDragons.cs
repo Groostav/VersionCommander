@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace VersionCommander
+namespace VersionCommander.Implementation
 {
     public class ThereBeDragons : Attribute
     {

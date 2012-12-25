@@ -1,4 +1,4 @@
-﻿namespace VersionCommander
+﻿namespace VersionCommander.Implementation
 {
     /// <summary>
     /// Signal-Interface declaring that this type does not have any mutable members.

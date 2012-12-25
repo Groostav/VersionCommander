@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace VersionCommander.Extensions
+namespace VersionCommander.Implementation.Extensions
 {
     /// <summary>
     /// An immutable grouping implementation that yields an empty set of elements and throws when attempting to read its key.

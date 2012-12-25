@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using AutoMapper;
 
-namespace VersionCommander.Tests.TestingAssists
+namespace VersionCommander.Implementation.Tests.TestingAssists
 {
     [DebuggerDisplay("DeepPropertyBag : StringProperty = {StringProperty}")]
     public class DeepPropertyBag : ICloneable, IEquatable<DeepPropertyBag>, IVersionablePropertyBag

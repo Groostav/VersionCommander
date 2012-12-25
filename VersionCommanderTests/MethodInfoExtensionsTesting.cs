@@ -2,9 +2,10 @@
 using System.Linq;
 using FluentAssertions;
 using NUnit.Framework;
-using VersionCommander.Extensions;
+using VersionCommander.Implementation.Extensions;
+using VersionCommander.Implementation.Extensions;
 
-namespace VersionCommander.Tests
+namespace VersionCommander.Implementation.Tests
 {
     [TestFixture]
     public class MethodInfoExtensionsTesting

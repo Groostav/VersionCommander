@@ -4,9 +4,10 @@ using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using VersionCommander.Extensions;
+using VersionCommander.Implementation.Extensions;
+using VersionCommander.Implementation.Extensions;
 
-namespace VersionCommander.Tests.TestingAssists
+namespace VersionCommander.Implementation.Tests.TestingAssists
 {
     public static class TestHelper
     {

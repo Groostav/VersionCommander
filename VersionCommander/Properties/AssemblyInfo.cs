@@ -1,16 +1,14 @@
 ﻿using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Castle.Core.Internal;
-using Constants = VersionCommander.Implementation.Constants;
 
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("VersionCommander")]
-[assembly: AssemblyDescription("Memory Versioning system for property bags")]
+[assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Digital Leyline")]
+[assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("VersionCommander")]
 [assembly: AssemblyCopyright("Copyright ©  2012")]
 [assembly: AssemblyTrademark("")]
@@ -22,7 +20,7 @@ using Constants = VersionCommander.Implementation.Constants;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("5467afd8-1e80-499e-a37c-c97cac8cf4e1")]
+[assembly: Guid("9f81be7f-62d5-4a53-bcc5-ce7c308667cd")]
 
 // Version information for an assembly consists of the following four values:
 //
@@ -34,12 +32,5 @@ using Constants = VersionCommander.Implementation.Constants;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("0.1.0.0")]
-[assembly: AssemblyFileVersion("0.1.0.0")]
-
-// For testing
-[assembly: InternalsVisibleTo(Constants.TestingAssemblyName)]
-// To keep ickey methods away from users, but expose it to dynamic proxies
-[assembly: InternalsVisibleTo("Castle.Core")]
-[assembly: InternalsVisibleTo("Castle.Proxies")]
-[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
+[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyFileVersion("1.0.0.0")]

@@ -1,4 +1,4 @@
-﻿namespace VersionCommander
+﻿namespace VersionCommander.Implementation
 {
     public interface ICloneable<out TClone>
     {

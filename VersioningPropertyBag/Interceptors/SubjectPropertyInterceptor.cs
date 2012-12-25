@@ -4,13 +4,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using Castle.DynamicProxy;
-using VersionCommander.Extensions;
+using VersionCommander.Implementation.Extensions;
 
-namespace VersionCommander
+namespace VersionCommander.Implementation
 {
-    internal class SubjectPropertyInterceptor<TSubject> : IInterceptor 
+    public class SubjectPropertyInterceptor<TSubject> : IInterceptor 
     {
         private readonly IVersionControlNode _controller;
         private readonly IEnumerable<PropertyInfo> _members;

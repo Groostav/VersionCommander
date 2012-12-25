@@ -5,9 +5,9 @@ using FakeItEasy;
 using FluentAssertions;
 using NUnit.Framework;
 using Castle.DynamicProxy;
-using VersionCommander.Tests.TestingAssists;
+using VersionCommander.Implementation.Tests.TestingAssists;
 
-namespace VersionCommander.Tests.ExternalTests
+namespace VersionCommander.Implementation.Tests.ExternalTests
 {
     public class TestingBasicCSharpKnowhow
     {
@@ -224,6 +224,71 @@ namespace VersionCommander.Tests.ExternalTests
             //I think my expected behavior should be to return an empty set of elements, and to throw when you ask for the key.
                 //stating that the key is the default(TKey), is prooobably fairly safe, but it might result in some empty groups being assigned to things where
                 //that element simply shouldnt exist.
+        }
+
+        public class ClassWithVirtualProperty
+        {
+            public IList<string> Invocations { get; private set; }
+
+            public ClassWithVirtualProperty()
+            {
+                Invocations = new List<string>();
+            }
+
+            private string _virtualProperty;
+            public virtual string VirtualProperty
+            {
+                get
+                {
+                    Invocations.Add(typeof(ClassWithVirtualProperty).Name);
+                    return _virtualProperty;
+                }
+                set { _virtualProperty = value; }
+            }
+        }
+
+        public class DerrivedOverridingVirtualProperty : ClassWithVirtualProperty
+        {
+            private string _virtualProperty;
+            public override string VirtualProperty
+            {
+                get
+                {
+                    Invocations.Add(typeof(DerrivedOverridingVirtualProperty).Name);
+                    var dontCare = base.VirtualProperty;
+                    return _virtualProperty;
+                }
+                set { _virtualProperty = value; }
+            }
+        }
+
+        public class FurtherDerrivedOverridingVirtualProperty : DerrivedOverridingVirtualProperty
+        {
+            private string _virtualProperty;
+            public override string VirtualProperty
+            {
+                get
+                {
+                    Invocations.Add(typeof(FurtherDerrivedOverridingVirtualProperty).Name);
+                    var dontCare = base.VirtualProperty;
+                    return _virtualProperty;
+                }
+                set { _virtualProperty = value; }
+            }
+        }
+
+        [Test]
+        public void when_overriding_overridden_members()
+        {
+            var mostDerrived = new FurtherDerrivedOverridingVirtualProperty();
+            mostDerrived.VirtualProperty = "what";
+            var retrieved = mostDerrived.VirtualProperty;
+
+            mostDerrived.Invocations.Should().ContainInOrder(new[] {typeof (FurtherDerrivedOverridingVirtualProperty).Name,
+                                                                    typeof (DerrivedOverridingVirtualProperty).Name,
+                                                                    typeof (ClassWithVirtualProperty).Name});
+            //so overrides are intrinsically virtual, and any overriding member can itself be overriden nicely.
+
         }
     }
 }

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq.Expressions;
 
-namespace VersionCommander
+namespace VersionCommander.Implementation
 {
     /// <summary>
     /// This iterface specifies that this is actively controlling the versioning of a TSubject. 
@@ -16,7 +16,7 @@ namespace VersionCommander
         void RedoLastAssignment();
         void RedoLastAssignmentTo<TTarget>(Expression<Func<TSubject, TTarget>> targetSite);
 
-        void RollbackTo(long ticks);
+        void RollbackTo(long targetVersion);
 
         TSubject WithoutVersionControl();
 

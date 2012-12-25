@@ -1,7 +1,7 @@
 ﻿using System;
 using AutoMapper;
 
-namespace VersionCommander
+namespace VersionCommander.Implementation
 {
     public interface ICloneFactory<TCloned>
     {

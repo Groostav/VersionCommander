@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Castle.DynamicProxy;
-using VersionCommander.Extensions;
+using VersionCommander.Implementation.Extensions;
 
-namespace VersionCommander
+namespace VersionCommander.Implementation
 {
-    internal class VersionControlInterceptor<TSubject> : IInterceptor 
+    public class VersionControlInterceptor<TSubject> : IInterceptor 
     {
         private readonly IVersionControlNode _controller;
 

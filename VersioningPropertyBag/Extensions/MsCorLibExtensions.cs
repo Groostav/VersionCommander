@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace VersionCommander.Extensions
+namespace VersionCommander.Implementation.Extensions
 {
     public static class MsCorLibExtensions
     {
@@ -18,6 +18,20 @@ namespace VersionCommander.Extensions
                 collection.Add(item);
             }
         }
+
+        public static bool IsSingle<TElement>(this IEnumerable<TElement> source)
+        {
+            return source.Count() == 1;
+        }
+
+        public static void ForEach<TElement>(this IEnumerable<TElement> source, Action action)
+        {
+            foreach (var element in source)
+            {
+                action.Invoke();
+            }
+        }
+
 
         public static IGrouping<TKey, TElement> WithMin<TElement, TKey>(this IEnumerable<TElement> source,
                                                                         Func<TElement, TKey> keySelector) 
@@ -41,12 +55,12 @@ namespace VersionCommander.Extensions
             if (source == null) throw new ArgumentNullException();
             if (!source.Any()) return new EmptyGrouping<TKey, TElement>();
 
-            var grouping = new ExtremaGrouping<TKey, TElement>(keySelector) {source.First()};
+            var grouping = new Grouping<TKey, TElement>(keySelector, new[] { source.First() });
             foreach (var element in source.Skip(1))
             {
                 if (comparator(keySelector(element).CompareTo(grouping.Key)))
                 {
-                    grouping = new ExtremaGrouping<TKey, TElement>(keySelector) {element};
+                    grouping = new Grouping<TKey, TElement>(keySelector, new[] {element});
                 }
                 else if (keySelector(element).CompareTo(grouping.Key) == 0)
                 {
