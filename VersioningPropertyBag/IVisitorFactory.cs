@@ -1,4 +1,6 @@
-﻿using VersionCommander.Implementation.Visitors;
+﻿using System;
+using System.Reflection;
+using VersionCommander.Implementation.Visitors;
 
 namespace VersionCommander.Implementation
 {
@@ -8,6 +10,7 @@ namespace VersionCommander.Implementation
             where TVisitor : IPropertyTreeVisitor, new();
 
         IPropertyTreeVisitor MakeRollbackVisitor(long targetVersion);
+        IPropertyTreeVisitor MakeDeltaApplicationVisitor(bool includeDescendents, bool isNowActive, MethodInfo targetSite);
     }
 
     public class VisitorFactory : IVisitorFactory
@@ -20,6 +23,11 @@ namespace VersionCommander.Implementation
         public IPropertyTreeVisitor MakeRollbackVisitor(long targetVersion)
         {
             return new RollbackVisitor(targetVersion);
+        }
+
+        public IPropertyTreeVisitor MakeDeltaApplicationVisitor(bool includeDescendents, bool isNowActive, MethodInfo targetSite)
+        {
+            return new DeltaApplicationVisitor(includeDescendents, isNowActive, targetSite);
         }
     }
 }

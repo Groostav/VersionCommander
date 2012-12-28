@@ -147,6 +147,8 @@ namespace VersionCommander.IntegrationTests
             copy.SpecialChild.StringProperty.Should().BeNull();
         }        
 
+        //TODO assert IsActive fix actually moves stuff to new memory.
+
         //get grand-fathering working
             //controller unit tests asserts that Accept with Clone was called
             //also edits a copied child and makes sure the original wasnt altered

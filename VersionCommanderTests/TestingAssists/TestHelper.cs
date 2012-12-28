@@ -60,6 +60,13 @@ namespace VersionCommander.UnitTests.TestingAssists
 
             return cast.Equals(action);
         }
+
+        public static IVersionControlNode CreateAndAddVersioningChildTo(PropertyVersionController<FlatPropertyBag> controller)
+        {
+            var child = A.Fake<IVersionControlNode>();
+            controller.Children.Add(child);
+            return child;
+        }
     }
 
     public static class PropertyManagementExtensions

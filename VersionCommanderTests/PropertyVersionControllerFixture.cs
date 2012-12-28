@@ -8,6 +8,7 @@ using VersionCommander.Implementation;
 using VersionCommander.Implementation.Exceptions;
 using VersionCommander.Implementation.Extensions;
 using VersionCommander.Implementation.Tests.TestingAssists;
+using VersionCommander.Implementation.Visitors;
 using VersionCommander.UnitTests.TestingAssists;
 
 // ReSharper disable InconsistentNaming -- test method names do not comply with naming convention
@@ -56,24 +57,48 @@ namespace VersionCommander.UnitTests
         }
 
         [Test]
+        public void when_using_a_visitor()
+        {
+            //setup
+            var controller = new PropertyVersionController<FlatPropertyBag>(new FlatPropertyBag(), 
+                                                                            TestHelper.DefaultCloneFactoryFor<FlatPropertyBag>(),
+                                                                            TestHelper.EmptyChangeSet(),
+                                                                            TestHelper.FakeVisitorFactory());
+            var fakeChildren = new[] {A.Fake<IVersionControlNode>(), A.Fake<IVersionControlNode>()};
+            var fakeVisitor = A.Fake<IPropertyTreeVisitor>();
+            controller.Children.AddRange(fakeChildren);
+
+            //act
+            controller.Accept(fakeVisitor);
+
+            //assert
+            A.CallTo(() => fakeChildren.First().Accept(fakeVisitor)).MustHaveHappened();
+            A.CallTo(() => fakeChildren.Last().Accept(fakeVisitor)).MustHaveHappened();
+            A.CallTo(() => fakeVisitor.RunOn(controller)).MustHaveHappened();
+        }
+
+        [Test]
         public void when_getting_version_from_construction()
         {
             //setup
             const string originalValue = "Original";
             var baseObject = new FlatPropertyBag() {StringProperty = originalValue};
+            var visitorFactory = TestHelper.FakeVisitorFactory();
             var controller = new PropertyVersionController<FlatPropertyBag>(baseObject,
                                                                             TestHelper.DefaultCloneFactoryFor<FlatPropertyBag>(),
                                                                             TestHelper.EmptyChangeSet(),
-                                                                            TestHelper.FakeVisitorFactory());
-            const int constructionTimeStamp = 2;
+                                                                            visitorFactory);
+            var fakeChild = TestHelper.CreateAndAddVersioningChildTo(controller);
+
+            const long constructionTimeStamp = 2;
 
             //act
             controller.Set(baseObject.PropertyInfoFor(x => x.StringProperty), "Change!", constructionTimeStamp + 1);
             var retrievedValue = controller.WithoutModificationsPast(constructionTimeStamp);
 
             //assert
-            retrievedValue.Should().NotBeNull();
-            retrievedValue.StringProperty.Should().Be(originalValue);
+            A.CallTo(() => visitorFactory.MakeVisitor<FindAndCopyVersioningChildVisitor>()).MustHaveHappened(Repeated.Exactly.Once);
+            A.CallTo(() => visitorFactory.MakeRollbackVisitor(constructionTimeStamp)).MustHaveHappened(Repeated.Exactly.Once);
         }
 
         [Test]

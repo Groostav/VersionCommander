@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using VersionCommander.Implementation.Exceptions;
-using VersionCommander.Implementation.Extensions;
 using VersionCommander.Implementation.Exceptions;
 using VersionCommander.Implementation.Extensions;
 using VersionCommander.Implementation.Visitors;
@@ -32,6 +29,7 @@ namespace VersionCommander.Implementation
         {
             Children =  new List<IVersionControlNode>();
             _mutations = new List<TimestampedPropertyVersionDelta>();
+
             _content = content;
             _cloneFactory = cloneFactory;
             _visitorFactory = visitorFactory;
@@ -39,7 +37,6 @@ namespace VersionCommander.Implementation
             if (existingChanges != null)
             {
                 _mutations.AddRange(existingChanges);
-                //BUG: references to existingChanges are mutable, thus setting another objects changes as active could potentially activate this objects changes.
             }
 
             _knownProperties = typeof (TSubject).GetProperties();
@@ -52,32 +49,30 @@ namespace VersionCommander.Implementation
 
         public void UndoLastChange()
         {
-            Accept(_visitorFactory.MakeVisitor<UndoLastChangeVisitor>());
+            Accept(_visitorFactory.MakeDeltaApplicationVisitor(includeDescendents:true, isNowActive:false, targetSite: null));
         }
 
         public void UndoLastAssignment()
         {
-            var targetMutation = Mutations.Last(item => item.IsActive);
-            targetMutation.IsActive = false;
+            Accept(_visitorFactory.MakeDeltaApplicationVisitor(includeDescendents:false, isNowActive:false, targetSite: null));
         }
 
         public void UndoLastAssignmentTo<TTarget>(Expression<Func<TSubject, TTarget>> targetSite)
         {
-            var targetMember = GetRequestedMember(targetSite).GetSetMethod();
-            var targetMutation = _mutations.Last(mutation => mutation.TargetSite == targetMember);
-            targetMutation.IsActive = false;
+            var targetProperty = GetRequestedMember(targetSite);
+            var targetSetter = targetProperty.GetSetMethod();
+
+            Accept(_visitorFactory.MakeDeltaApplicationVisitor(includeDescendents: false, isNowActive: true, targetSite:targetSetter));
         }
 
         public void RedoLastChange()
         {
-            Accept(_visitorFactory.MakeVisitor<RedoLastChangeVisitor>());
+            Accept(_visitorFactory.MakeDeltaApplicationVisitor(includeDescendents:true, isNowActive:true, targetSite:null));
         }
 
         public void RedoLastAssignment()
         {
-            var targetMutation = Mutations.Where(mutation => !mutation.IsActive).WithMax(mutation => mutation.TimeStamp);
-            Debug.Assert(targetMutation.IsSingle());
-            targetMutation.Single().IsActive = true;
+            Accept(_visitorFactory.MakeDeltaApplicationVisitor(includeDescendents:false, isNowActive:true, targetSite:null));
         }
 
         public void RedoLastAssignmentTo<TTarget>(Expression<Func<TSubject, TTarget>> targetSite)
@@ -86,73 +81,12 @@ namespace VersionCommander.Implementation
             EnsureCanRedoChangeTo(targetProperty);
             var targetSetter = targetProperty.GetSetMethod();
 
-            var targetDelta = _mutations.First(mutation => mutation.TargetSite == targetSetter && !mutation.IsActive);
-            targetDelta.IsActive = true;
+            Accept(_visitorFactory.MakeDeltaApplicationVisitor(includeDescendents: false, isNowActive: true, targetSite:targetSetter));
         }
-
-        private void EnsureCanRedoChangeTo(PropertyInfo targetMember)
-        {
-            var targetMethod = targetMember.GetSetMethod();
-            if ( ! _mutations.Any(mutation => mutation.TargetSite == targetMethod && !mutation.IsActive))
-            {
-                throw new UntrackedObjectException(
-                    string.Format("No change to {0} can be redone, as either no changes have been made yet, " +
-                                  "or a previous call to set {0} deleted all previously undone values.", targetMember.Name));
-            }
-        }
-
-        private PropertyInfo GetRequestedMember<TTarget>(Expression<Func<TSubject, TTarget>> targetSite)
-        {
-            var unwoundMessageChain = new Queue<MemberInfo>();
-            var root = targetSite.Body;
-
-            var nextMessageChainLink = root;
-            while (nextMessageChainLink is MemberExpression)
-            {
-                unwoundMessageChain.Enqueue((nextMessageChainLink as MemberExpression).Member);
-                nextMessageChainLink = (nextMessageChainLink as MemberExpression).Expression;
-            }
-
-            if (unwoundMessageChain.Count > 1)
-            {
-                throw new UntrackedObjectException(
-                    string.Format(
-                        "Cannot undo assignments to properties of child objects. If that child is itself versionable, " +
-                        "invoke {0}() on the child directly",
-                        MethodInfoExtensions.GetMethodInfo(() => UndoLastAssignmentTo<TTarget>(null)).Name));
-            }
-            else if (unwoundMessageChain.Count < 1)
-            {
-                throw new UntrackedObjectException(
-                    string.Format("Version Commander cannot undo/redo an assignment to itself."));
-            }
-
-            var targetMember = unwoundMessageChain.Dequeue() as PropertyInfo;
-
-            if (targetMember == null)
-            {
-                throw new UntrackedObjectException(
-                    string.Format(
-                        "Could not determine target member to rollback. Best candidate was {0} but it is not a property.",
-                        targetMember.Name));
-            }
-
-            var targetSetter = targetMember.GetSetMethod();
-
-            if (targetSetter == null)
-            {
-                throw new UntrackedObjectException(
-                    string.Format("No setter for the property {0} exists, thus it is not versioned",
-                                  targetSite.Name));
-            }
-
-            return targetMember;
-        }
-
 
         public override IVersionControlNode CurrentDepthCopy()
         {
-            return New.Versioning<TSubject>(_content, _cloneFactory, _mutations).VersionControlNode();
+            return New.Versioning<TSubject>(_content, _cloneFactory, _mutations.Select(mutation => mutation.Clone())).VersionControlNode();
         }
 
         public TSubject GetCurrentVersion()
@@ -192,9 +126,79 @@ namespace VersionCommander.Implementation
         public override void Set(PropertyInfo targetProperty, object value, long version)
         {
             var targetSite = targetProperty.GetSetMethod();
-            _mutations.RemoveAll(mutation => mutation.TargetSite == targetSite && !mutation.IsActive);
+            _mutations.RemoveAll(mutation => mutation.TargetSite == targetSite && ! mutation.IsActive);
             _mutations.Add(new TimestampedPropertyVersionDelta(value, targetSite, version));
         }
+
+        private void EnsureCanUndoChangeTo(PropertyInfo targetMember)
+        {
+            EnsureCanXDo(targetMember, isRedo:false);
+        }
+        private void EnsureCanRedoChangeTo(PropertyInfo targetMember)
+        {
+            EnsureCanXDo(targetMember, isRedo:true);
+        }
+
+        private void EnsureCanXDo(PropertyInfo targetMember, bool isRedo)
+        {
+            var targetMethod = targetMember.GetSetMethod();
+            if ( ! _mutations.Any(mutation => mutation.TargetSite == targetMethod && mutation.IsActive ^ isRedo))
+            {
+                throw new VersionDeltaNotFoundException(
+                    string.Format("No change to {0} can be redone, as either no changes have been made yet, " +
+                                  "or a previous call to set {0} deleted all previously undone values.", targetMember.Name));
+            }
+        }
+
+        private PropertyInfo GetRequestedMember<TTarget>(Expression<Func<TSubject, TTarget>> targetSite)
+        {
+            var unwoundMessageChain = new Queue<MemberInfo>();
+            var root = targetSite.Body;
+
+            var nextMessageChainLink = root;
+            while (nextMessageChainLink is MemberExpression)
+            {
+                unwoundMessageChain.Enqueue((nextMessageChainLink as MemberExpression).Member);
+                nextMessageChainLink = (nextMessageChainLink as MemberExpression).Expression;
+            }
+
+            if (unwoundMessageChain.Count > 1)
+            {
+                throw new UntrackedObjectException(
+                    string.Format(
+                        "Cannot undo assignments to properties of child objects. If that child is itself versionable, " +
+                        "invoke {0}() on the child directly",
+                        MethodInfoExtensions.GetMethodInfo(() => UndoLastAssignmentTo<TTarget>(null)).Name));
+            }
+            else if (unwoundMessageChain.Count < 1)
+            {
+                throw new UntrackedObjectException(
+                    string.Format("Version Commander cannot undo/redo an assignment to itself."));
+            }
+
+            var candidate = unwoundMessageChain.Dequeue();
+            var targetMember = candidate as PropertyInfo;
+
+            if (targetMember == null)
+            {
+                throw new UntrackedObjectException(
+                    string.Format(
+                        "Could not determine target member to rollback. Best candidate was {0} but it is not a property.",
+                        candidate.Name));
+            }
+
+            var targetSetter = targetMember.GetSetMethod();
+
+            if (targetSetter == null)
+            {
+                throw new UntrackedObjectException(
+                    string.Format("No setter for the property {0} exists, thus it is not versioned",
+                                  targetSite.Name));
+            }
+
+            return targetMember;
+        }
+
 
     }
 }

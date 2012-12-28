@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Castle.DynamicProxy;
 
 namespace VersionCommander.Implementation
@@ -49,7 +49,7 @@ namespace VersionCommander.Implementation
                                                              },
                                                              target:baseObject,
                                                              options: ProxyGenerationOptions.Default,
-                                                             constructorArguments: new object[0],
+                                                             constructorArguments: Enumerable.Empty<object>().ToArray(),
                                                              //note: order matters on interceptors
                                                              interceptors:new IInterceptor[]{versionControlInterceptor, subjectInterceptor});
 
