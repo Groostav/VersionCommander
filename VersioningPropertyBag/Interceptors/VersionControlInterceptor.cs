@@ -35,8 +35,7 @@ namespace VersionCommander.Implementation
             
             if (IsRelaventToVersionControl(invocation))
             {
-                MethodInfoExtensions.RefocusDynamicInvocationExceptions(() =>
-                    invocation.ReturnValue = invocation.Method.Invoke(_controller, invocation.Arguments));
+                invocation.ReturnValue = _controller;
             }
             else
             {
@@ -61,8 +60,7 @@ namespace VersionCommander.Implementation
 
         private bool IsRelaventToVersionControl(IInvocation invocation)
         {
-            return invocation.Method.DeclaringType == typeof (IVersionController<TSubject>)
-                   || invocation.Method.DeclaringType == typeof (IVersionControlNode);
+            return invocation.Method.DeclaringType == typeof (IVersionControlProvider);
         }
 
         private static bool IsSettingNewVersionableObjectOnSubject(IInvocation invocation)

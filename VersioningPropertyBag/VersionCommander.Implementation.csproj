@@ -51,6 +51,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Constants.cs" />
+    <Compile Include="IVersionControlProvider.cs" />
     <Compile Include="IVisitorFactory.cs" />
     <Compile Include="Visitors\DescendentAggregatorVisitor.cs" />
     <Compile Include="Extensions\EmptyGrouping.cs" />

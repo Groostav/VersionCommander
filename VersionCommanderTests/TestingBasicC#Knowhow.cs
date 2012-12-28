@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using FakeItEasy;
 using FluentAssertions;
 using NUnit.Framework;
 using Castle.DynamicProxy;
 using VersionCommander.Implementation;
+using VersionCommander.Implementation.Extensions;
 using VersionCommander.Implementation.Tests.TestingAssists;
 using VersionCommander.UnitTests.TestingAssists;
 
@@ -290,7 +292,212 @@ namespace VersionCommander.UnitTests
                                                                     typeof (DerrivedOverridingVirtualProperty).Name,
                                                                     typeof (ClassWithVirtualProperty).Name});
             //so overrides are intrinsically virtual, and any overriding member can itself be overriden nicely.
+        }
+
+        public class RecordingVersionControlProvider : IVersionControlProvider, IEquatable<IVersionControlProvider>
+        {
+            private static int IdCounter { get; set; }
+            public int Id { get; private set; }
+
+            public RecordingVersionControlProvider()
+            {
+                Id = ++IdCounter;
+            }
+
+            public IVersionControlNode GetVersionControlNode()
+            {
+                throw new NotImplementedException();
+            }
+
+            public IVersionController<TSubject> GetVersionController<TSubject>()
+            {
+                throw new NotImplementedException();
+            }
+
+            public bool Equals(IVersionControlProvider other)
+            {
+                EqualsCallMe.WasCalled = true;
+
+                if (ReferenceEquals(null, other)) return false;
+                if (ReferenceEquals(this, other)) return true;
+
+                return true;
+            }
+
+            public override int GetHashCode()
+            {
+                return Id;
+            }
+
+            public static bool operator ==(RecordingVersionControlProvider left, RecordingVersionControlProvider right)
+            {
+                return Equals(left, right);
+            }
+
+            public static bool operator !=(RecordingVersionControlProvider left, RecordingVersionControlProvider right)
+            {
+                return !Equals(left, right);
+            }
+        }
+
+        public static class EqualsCallMe
+        {
+            public static bool WasCalled { get; set; }
+        }
+
+        [Test]
+        public void when_testing_equality_on_a_type_statically_known_as_an_interface_but_backed_by_a_type_that_overloads_equals()
+        {
+            IVersionControlProvider nullProvider = new NullVersionControlProvider();
+
+            ReferenceEquals(nullProvider, null).Should().BeFalse();
+
+            nullProvider.Equals(null).Should().BeTrue();
+
+            nullProvider.Equals(new NullVersionControlProvider()).Should().BeTrue();
+            //how the bugger is this true? It must be hitting NullVersionControlProviders equals, but how?
+
+            nullProvider.Equals(new RecordingVersionControlProvider()).Should().BeFalse();
+            EqualsCallMe.WasCalled.Should().BeFalse();
+            //because its not hitting the recordingVersionControlProviders equals
+
+            //and once it hits that public new static extern bool Equals... thing from the RuntimeHelper theres no way its jumping back into this assembly.
+        }
+
+        public interface IEmptyInterface
+        {
+        }
+
+        public class EmptyOverridingTypedEquality : IEmptyInterface, IEquatable<IEmptyInterface>
+        {
+            static EmptyOverridingTypedEquality()
+            {
+                EqualsLog = new List<string>();
+            }
+            public static IList<string> EqualsLog { get; private set; }
+            private static int _idCounter;
+
+            public const string CalledTypedEqualsOnThisTypeOtherTemplate = "Called Typed-Equals on {0}. Other is a EmptyOverridingTypedEquality with Id {1}. Returning true";
+            public const string CalledTypedEqualsOnNotThisTypeOtherTemplate = "Called Typed-Equals on {0}. Other is type {1} (not a EmptyOverridingTypedEquality). Returning false";
+            public const string CalledTypedEqualsOnNullOtherTemplate = "Called Typed-Equals on {0}. Other is null. Returning false.";
+
+            public int Id { get; private set; }
+
+            public EmptyOverridingTypedEquality()
+            {
+                Id = ++_idCounter;
+            }
+
+            //this is the ONE AND ONLY Method IEquatable<T> demands you implement. 
+                //why doesnt it demand hashcode implementation?
+            public bool Equals(IEmptyInterface other)
+            {
+                if (other == null)
+                {
+                    EqualsLog.Add(string.Format(CalledTypedEqualsOnNullOtherTemplate, Id));
+                    return false;
+                }
+                var otherAsT = other as EmptyOverridingTypedEquality;
+                if (otherAsT == null)
+                {
+                    EqualsLog.Add(string.Format(CalledTypedEqualsOnNotThisTypeOtherTemplate, Id, other.GetType()));
+                    return false;
+                }
+                else 
+                {
+                    EqualsLog.Add(string.Format(CalledTypedEqualsOnThisTypeOtherTemplate, Id, otherAsT.Id));
+                    return true;
+                }
+            }
+        }
+
+        [Test]
+        public void yet_more_testing_on_equals()
+        {
+            IEmptyInterface staticallyInterface = new EmptyOverridingTypedEquality();
+            staticallyInterface.Equals(new EmptyOverridingTypedEquality()).Should().BeFalse();
+            EmptyOverridingTypedEquality.EqualsLog.Should().BeEmpty();
+
+            var staticallyImplementation = staticallyInterface as EmptyOverridingTypedEquality;
+            var other = new EmptyOverridingTypedEquality();
+            staticallyImplementation.Equals(other).Should().BeTrue();
+            EmptyOverridingTypedEquality.EqualsLog.Should().ContainSingle(item => item == string.Format(EmptyOverridingTypedEquality.
+                                                                          CalledTypedEqualsOnThisTypeOtherTemplate, staticallyImplementation.Id, other.Id));
+        }
+
+        public class EmptyOverridingEverythingItCan : EmptyOverridingTypedEquality
+        {
+            public override int GetHashCode()
+            {
+                EqualsLog.Add(string.Format("Whos this asshole whos calling GetHashCode on my object? They're at: \n" + new StackTrace()));
+                return 0;
+            }
+
+            public static bool operator ==(EmptyOverridingEverythingItCan left, EmptyOverridingEverythingItCan right)
+            {
+                return Equals(left, right);
+            }
+
+            public static bool operator !=(EmptyOverridingEverythingItCan left, EmptyOverridingEverythingItCan right)
+            {
+                return !Equals(left, right);
+            }
+
+            public const string CalledUntypedEqualsOnThisTypeOtherTemplate = "Called Object-Equals on {0}. Other is a EmptyOverridingTypedEquality with Id {1}. Returning true";
+            public const string CalledUntypedEqualsOnNotThisTypeOtherTemplate = "Called Object-Equals on {0}. Other is type {1} (not an EmptyOverridingEverythingItCan). Returning false";
+            public const string CalledUntypedEqualsOnNullOtherTemplate = "Called Object-Equals on {0}. Other is null. Returning false.";
+
+            public override bool Equals(object obj)
+            {
+                if (obj == null)
+                {
+                    EqualsLog.Add(string.Format(CalledUntypedEqualsOnNullOtherTemplate, Id));
+                    return false;
+                }
+                var objAsT = obj as EmptyOverridingEverythingItCan;
+                if (objAsT == null)
+                {
+                    EqualsLog.Add(string.Format(CalledUntypedEqualsOnNotThisTypeOtherTemplate, Id, obj.GetType()));
+                    return false;
+                }
+                else
+                {
+                    EqualsLog.Add(string.Format(CalledUntypedEqualsOnThisTypeOtherTemplate, Id, objAsT.Id));
+                    return true;
+                }
+            }
+        }
+
+        [Test]
+        public void unending_testing_of_equals()
+        {
+            IEmptyInterface staticallyInterface = new EmptyOverridingEverythingItCan();
+            var other = new EmptyOverridingEverythingItCan();
+            staticallyInterface.Equals(other).Should().BeTrue("because the equals call was intercepted via the V-Table");
+            EmptyOverridingTypedEquality.EqualsLog.Should().ContainSingle(item => item == string.Format(EmptyOverridingEverythingItCan.
+                                                                          CalledUntypedEqualsOnThisTypeOtherTemplate, staticallyInterface.As<EmptyOverridingTypedEquality>().Id, other.Id));
+
+            var staticallyImplementation = staticallyInterface as EmptyOverridingEverythingItCan;
+            other = new EmptyOverridingEverythingItCan();
+            staticallyImplementation.Equals(other).Should().BeTrue("because the equals call was intercepted via the IEquality<Interface> overload");
+            EmptyOverridingTypedEquality.EqualsLog.Should().ContainSingle(item => item == string.Format(EmptyOverridingTypedEquality.
+                                                                          CalledTypedEqualsOnThisTypeOtherTemplate, staticallyImplementation.Id, other.Id));
 
         }
+
+        //ok, theres no cleverness to whats going on here:
+            // you must have an untyped Object.Equals override for there to be no ifs-ands-or-buts about getting that equals call.
+            // no run-time reflection is performed to look for a suitable equals, its all done statically, meaning you get false if you call
+                //equals on an object handle that is IEmptyInterface, even if the backing object is one that has an IEquatable<IEmptyInterface>.
+                //that makse sense since that typed Equals call isn't in IEmptyInterface's V-Table.
+
+        //Moral: if you're overloading a typed equals, you probably want to override the untyped object equals to. If you do, try cast as the type
+            //if you succeed in the cast, invoke the typed equals
+            //if you dont, invoke the base equals (or simply return false since you can be assured theres no way the Runtime one will return true...
+                //unless you can somehow get a reference to yourself that isnt of the type of yourself...
+                    //or I guess your equals call is overloading Equals to a totally despirate type?
+
+        //anyways, resharpers generated equality stuff makes sense. I wish this was more newbie friendly.
+            //also, intrestingly, a typed equality comparison doesn't require overloading GetHashCode().
     }
 }

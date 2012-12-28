@@ -1,4 +1,5 @@
 ﻿using System;
+using VersionCommander;
 using VersionCommander.Implementation;
 using New = VersionCommander.New;
 

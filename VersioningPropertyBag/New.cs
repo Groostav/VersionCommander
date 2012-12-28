@@ -45,8 +45,7 @@ namespace VersionCommander.Implementation
             var proxy = Generator.CreateClassProxyWithTarget(classToProxy:typeof (TSubject),
                                                              additionalInterfacesToProxy:new[]
                                                              {
-                                                                 typeof (IVersionController<TSubject>),
-                                                                 typeof (IVersionControlNode)
+                                                                 typeof (IVersionControlProvider)
                                                              },
                                                              target:baseObject,
                                                              options: ProxyGenerationOptions.Default,
