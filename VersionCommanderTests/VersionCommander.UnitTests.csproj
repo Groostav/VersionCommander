@@ -74,6 +74,7 @@
     <Compile Include="PropertyVersionControllerFixture.cs" />
     <Compile Include="MethodInfoExtensionsTesting.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TestingAssists\FakeFlatPropertyBag.cs" />
     <Compile Include="TestingAssists\FlatPropertyBag.cs" />
     <Compile Include="TestingAssists\TestHelper.cs" />
     <Compile Include="TestingAssists\DeepPropertyBag.cs" />

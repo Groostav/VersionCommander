@@ -7,8 +7,6 @@ using FluentAssertions;
 using NUnit.Framework;
 using Castle.DynamicProxy;
 using VersionCommander.Implementation;
-using VersionCommander.Implementation.Extensions;
-using VersionCommander.Implementation.NullObjects;
 using VersionCommander.Implementation.Tests.TestingAssists;
 using VersionCommander.UnitTests.TestingAssists;
 
@@ -48,7 +46,7 @@ namespace VersionCommander.UnitTests
              EqualsCallMe.WasCalled = false;
              EmptyOverridingTypedEquality.EqualsLog.Clear();
          }
-
+        
         private struct Base
         {
         }

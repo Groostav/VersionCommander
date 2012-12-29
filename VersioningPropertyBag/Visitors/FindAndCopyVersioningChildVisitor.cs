@@ -36,7 +36,8 @@ namespace VersionCommander.Implementation.Visitors
                                             .Select(group => group.Last())
                                             .Select(mutation => mutation.Value.Arguments.Single().VersionControlNode());
 
-            controlNode.Children = children.ToList();
+            controlNode.Children.Clear(); 
+            controlNode.Children.AddRange(children);
         }
 
         private IEnumerable<KeyValuePair<int, TimestampedPropertyVersionDelta>> GetCadidatesByIndex(IVersionControlNode node)

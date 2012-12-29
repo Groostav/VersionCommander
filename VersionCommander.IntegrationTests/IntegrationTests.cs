@@ -126,7 +126,7 @@ namespace VersionCommander.IntegrationTests
                          });
 
             parent.SpecialChild.StringProperty = "ChildStringey";
-
+            
             Assert.Throws<UntrackedObjectException>(() => parent.UndoLastAssignmentTo(x => x.SpecialChild.StringProperty));
         }
         

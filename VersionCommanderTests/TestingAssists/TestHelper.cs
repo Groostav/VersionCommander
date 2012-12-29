@@ -20,11 +20,12 @@ namespace VersionCommander.UnitTests.TestingAssists
             return Enumerable.Empty<TimestampedPropertyVersionDelta>();
         }
 
+        //TODO this should be returning a fake
         public static ICloneFactory<TCloneable> DefaultCloneFactoryFor<TCloneable>()
             where TCloneable : new()
         {
             return new DefaultCloneFactory<TCloneable>();
-        } 
+        }
 
         public static IVisitorFactory FakeVisitorFactory()
         {
@@ -48,13 +49,20 @@ namespace VersionCommander.UnitTests.TestingAssists
             var flatValues = values.ToArray();
             var flatMethods = methods.ToArray();
             var flatVersions = versions.ToArray();
-            var flatActives = isActives == null ? Enumerable.Repeat(true, flatValues.Length).ToArray() : isActives.ToArray();
+            var flatActives = isActives == null
+                                  ? Enumerable.Repeat(true, flatValues.Length).ToArray()
+                                  : isActives.ToArray();
 
-            Debug.Assert(flatMethods.Length == flatVersions.Length && flatVersions.Length == flatValues.Length && flatValues.Length == flatActives.Length);
+            Debug.Assert(flatMethods.Length == flatVersions.Length && flatVersions.Length == flatValues.Length &&
+                         flatValues.Length == flatActives.Length);
 
             return Enumerable.Range(0, flatMethods.Length)
-                             .Select(index => new TimestampedPropertyVersionDelta(flatValues[index], flatMethods[index], flatVersions[index], flatActives[index]))
-                             .ToArray(); //never yield return new! those three keywords should be banned when used in succession!
+                             .Select(
+                                 index =>
+                                 new TimestampedPropertyVersionDelta(flatValues[index], flatMethods[index],
+                                                                     flatVersions[index], flatActives[index]))
+                             .ToArray();
+                //never yield return new! those three keywords should be banned when used in succession!
         }
 
         internal static bool IsAction<TActionInput>(this object argument, Action<TActionInput> action)
@@ -65,7 +73,8 @@ namespace VersionCommander.UnitTests.TestingAssists
             return cast.Equals(action);
         }
 
-        public static IVersionControlNode CreateAndAddVersioningChildTo(PropertyVersionController<FlatPropertyBag> controller)
+        public static IVersionControlNode CreateAndAddVersioningChildTo(
+            PropertyVersionController<FlatPropertyBag> controller)
         {
             var child = A.Fake<IVersionControlNode>();
             controller.Children.Add(child);
@@ -76,14 +85,39 @@ namespace VersionCommander.UnitTests.TestingAssists
         {
             return Builder<TBuildable>.CreateNew().Build();
         }
+
         public static TResult ProvidedNonDefaultFor<TBuildable, TResult>(Func<TBuildable, TResult> propertyPointer)
         {
             return propertyPointer.Invoke(CreateWithNonDefaultProperties<TBuildable>());
         }
 
-        public static IProxyFactory FakeProxyFactory()
+        public static IProxyFactory MakeConfiguredProxyFactory()
         {
-            return A.Fake<IProxyFactory>();
+            var factory = A.Fake<IProxyFactory>();
+            FakeProxyFactoryProvidedControlNode = A.Fake<IVersionControlNode>();
+            FakeProxyFactoryProvidedPropertyBag = A.Fake<FakeFlatPropertyBag>();
+
+            A.CallTo(() => factory.CreateVersioning<FlatPropertyBag>(null, null, null))
+             .WithAnyArguments()
+             .Returns(FakeProxyFactoryProvidedPropertyBag);
+
+            A.CallTo(() => FakeProxyFactoryProvidedPropertyBag.GetVersionControlNode())
+             .WithAnyArguments()
+             .Returns(FakeProxyFactoryProvidedControlNode);
+
+            return factory;
+        }
+
+        public static FakeFlatPropertyBag FakeProxyFactoryProvidedPropertyBag { get; private set; }
+        public static IVersionControlNode FakeProxyFactoryProvidedControlNode { get; private set; }
+
+        public static TimestampedPropertyVersionDelta MakeDontCareChange<TContent>()
+        {
+            var targetSite = typeof (TContent).GetProperties().FirstOrDefault(prop => prop.GetSetMethod() != null);
+            if(targetSite == null) throw new NotImplementedException("couldnt find a suitable property");
+            var setValue = targetSite.GetGetMethod().ReturnType.GetDefaultValue();
+
+            return new TimestampedPropertyVersionDelta(setValue, targetSite.GetSetMethod(), -1L, isActive:true);
         }
     }
 }

@@ -100,9 +100,10 @@ namespace VersionCommander.Implementation
         public TSubject WithoutModificationsPast(long ticks)
         {
             var clone = _proxyFactory.CreateVersioning(_content, _cloneFactory, Mutations);
-            clone.VersionControlNode().Children.AddRange(Children);
-            clone.VersionControlNode().Accept(_visitorFactory.MakeVisitor<FindAndCopyVersioningChildVisitor>());
-            clone.VersionControlNode().Accept(_visitorFactory.MakeRollbackVisitor(ticks));
+            var cloneControlNode = clone.VersionControlNode();
+            cloneControlNode.Children.AddRange(Children);
+            cloneControlNode.Accept(_visitorFactory.MakeVisitor<FindAndCopyVersioningChildVisitor>());
+            cloneControlNode.Accept(_visitorFactory.MakeRollbackVisitor(ticks));
 
             return clone;
         }

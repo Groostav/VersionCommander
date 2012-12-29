@@ -21,6 +21,18 @@ namespace VersionCommander.Implementation.Extensions
             }
         }
 
+        public static object GetDefaultValue(this Type type)
+        {
+            if (type.IsValueType)
+            {
+                return Activator.CreateInstance(type);
+            }
+            else
+            {
+                return null;
+            }
+        }
+
         [Pure]
         public static PropertyInfo PropertyInfoFor<TSubject, TResult>(this TSubject subject,
                                                                       Expression<Func<TSubject, TResult>> propertyPointer)

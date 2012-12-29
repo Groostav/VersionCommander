@@ -13,7 +13,7 @@ namespace VersionCommander.Implementation
         void RollbackTo(long targetVersion);
         IVersionControlNode CurrentDepthCopy();
 
-        IList<IVersionControlNode> Children { get; set; }
+        IList<IVersionControlNode> Children { get; }
         IVersionControlNode Parent { get; set; }
 
         void Accept(IPropertyTreeVisitor visitor);
@@ -45,11 +45,6 @@ namespace VersionCommander.Implementation
                 Contract.Ensures(Contract.Result<IList<IVersionControlNode>>().Any());
                 return default(IList<IVersionControlNode>);
             }
-            set
-            {
-                Contract.Requires(value != null);
-                Contract.Requires( ! value.IsReadOnly);
-            }
         }
 
         IVersionControlNode IVersionControlNode.Parent
@@ -61,13 +56,14 @@ namespace VersionCommander.Implementation
             }
             set
             {
-                throw new NotImplementedException();
+                Contract.Requires(value != null);
             }
         }
 
         void IVersionControlNode.Accept(IPropertyTreeVisitor visitor)
         {
-            throw new NotImplementedException();
+            Contract.Requires(visitor != null);
+            //Contract.Ensures(visitor is run on all children).
         }
 
         [Pure]

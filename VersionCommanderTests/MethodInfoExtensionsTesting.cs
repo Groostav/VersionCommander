@@ -18,7 +18,7 @@ namespace VersionCommander.UnitTests
 
             public void AMethod()
             {
-                throw new System.NotImplementedException();
+                throw new NotImplementedException();
             }
 
             public void AGenericMethod<Titem>(Titem item)
