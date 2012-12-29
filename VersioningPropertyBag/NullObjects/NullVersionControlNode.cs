@@ -13,14 +13,14 @@ namespace VersionCommander.Implementation.NullObjects
             throw new NotImplementedException();
         }
 
-        public IVersionControlNode CurrentDepthCopy()
+        public object CurrentDepthCopy()
         {
             throw new NotImplementedException();
         }
 
         public IList<IVersionControlNode> Children { get; set; }
         public IVersionControlNode Parent { get; set; }
-        public void Accept(IPropertyTreeVisitor visitor)
+        public void Accept(IVersionControlTreeVisitor visitor)
         {
             throw new NotImplementedException();
         }

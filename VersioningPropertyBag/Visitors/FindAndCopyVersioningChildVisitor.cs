@@ -5,7 +5,7 @@ using VersionCommander.Implementation.Extensions;
 
 namespace VersionCommander.Implementation.Visitors
 {
-    public class FindAndCopyVersioningChildVisitor : IPropertyTreeVisitor
+    public class FindAndCopyVersioningChildVisitor : IVersionControlTreeVisitor
     {
         public void RunOn(IVersionControlNode controlNode)
         {
@@ -24,7 +24,7 @@ namespace VersionCommander.Implementation.Visitors
                 var cloneVersionNode = versioningChild.VersionControlNode().CurrentDepthCopy();
 
                 //this node has new memory, but its still referencing the original children.
-                cloneVersionNode.Accept(new FindAndCopyVersioningChildVisitor()); //Update those references.
+                cloneVersionNode.VersionControlNode().Accept(new FindAndCopyVersioningChildVisitor()); //Update those references.
 
                 controlNode.Mutations[indexCandidatePair.Key] = new TimestampedPropertyVersionDelta(indexCandidatePair.Value, cloneVersionNode);
             }

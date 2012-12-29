@@ -2,20 +2,20 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
 using FakeItEasy;
 using FizzWare.NBuilder;
 using VersionCommander.Implementation;
 using VersionCommander.Implementation.Extensions;
+using VersionCommander.Implementation.Visitors;
 
 namespace VersionCommander.UnitTests.TestingAssists
 {
-    public static class TestHelper
+    public class TestHelper
     {
         public const string NonNullDefaultString = "Non Null Default";
 
-        public static IEnumerable<TimestampedPropertyVersionDelta> EmptyChangeSet()
+        public IEnumerable<TimestampedPropertyVersionDelta> EmptyChangeSet()
         {
             return Enumerable.Empty<TimestampedPropertyVersionDelta>();
         }
@@ -27,10 +27,50 @@ namespace VersionCommander.UnitTests.TestingAssists
             return new DefaultCloneFactory<TCloneable>();
         }
 
-        public static IVisitorFactory FakeVisitorFactory()
+        public IVersionControlTreeVisitor ProvidedRollbackVisitor { get; private set; }
+        public IVersionControlTreeVisitor ProvidedFindAndCopyVersioningChildVisitor { get; private set; }
+        public IVersionControlTreeVisitor ProvidedDeltaApplicationVisitor { get; private set; }
+        public IVersionControlTreeVisitor ProvidedDescendentAggregatorVisitor { get; private set; }
+
+        public IVisitorFactory ProvidedVisitorFactory { get; private set; }
+        public IVisitorFactory MakeConfiguredFakeVisitorFactory()
         {
-            return A.Fake<IVisitorFactory>();
+            ProvidedVisitorFactory = A.Fake<IVisitorFactory>();
+
+            ProvidedRollbackVisitor = A.Fake<IVersionControlTreeVisitor>();
+            ProvidedDeltaApplicationVisitor = A.Fake<IVersionControlTreeVisitor>();
+            ProvidedFindAndCopyVersioningChildVisitor = A.Fake<IVersionControlTreeVisitor>();
+            ProvidedDescendentAggregatorVisitor = A.Fake<IVersionControlTreeVisitor>();
+
+            A.CallTo(() => ProvidedVisitorFactory.MakeVisitor<FindAndCopyVersioningChildVisitor>()).Returns(ProvidedFindAndCopyVersioningChildVisitor);
+            A.CallTo(() => ProvidedVisitorFactory.MakeVisitor<DescendentAggregatorVisitor>()).Returns(ProvidedDescendentAggregatorVisitor);
+            A.CallTo(() => ProvidedVisitorFactory.MakeRollbackVisitor(0)).WithAnyArguments().Returns(ProvidedRollbackVisitor);
+            A.CallTo(() => ProvidedVisitorFactory.MakeDeltaApplicationVisitor(false, false, null)).WithAnyArguments().Returns(ProvidedDeltaApplicationVisitor);
+
+            return ProvidedVisitorFactory;
         }
+
+        public IProxyFactory ProvidedProxyFactory { get; private set; }
+        public FakeFlatPropertyBag ProvidedFlatPropertyBag { get; private set; }
+        public IVersionControlNode ProvidedControlNode { get; private set; }
+
+        public IProxyFactory MakeConfiguredProxyFactory()
+        {
+            ProvidedProxyFactory = A.Fake<IProxyFactory>();
+            ProvidedControlNode = A.Fake<IVersionControlNode>();
+            ProvidedFlatPropertyBag = A.Fake<FakeFlatPropertyBag>();
+
+            A.CallTo(() => ProvidedProxyFactory.CreateVersioning<FlatPropertyBag>(null, null, null))
+             .WithAnyArguments()
+             .Returns(ProvidedFlatPropertyBag);
+
+            A.CallTo(() => ProvidedFlatPropertyBag.GetVersionControlNode())
+             .WithAnyArguments()
+             .Returns(ProvidedControlNode);
+
+            return ProvidedProxyFactory;
+        }
+
 
         public static IEnumerable<TimestampedPropertyVersionDelta> ChangeSet(object value,
                                                                              MethodInfo method,
@@ -53,24 +93,17 @@ namespace VersionCommander.UnitTests.TestingAssists
                                   ? Enumerable.Repeat(true, flatValues.Length).ToArray()
                                   : isActives.ToArray();
 
-            Debug.Assert(flatMethods.Length == flatVersions.Length && flatVersions.Length == flatValues.Length &&
-                         flatValues.Length == flatActives.Length);
+            Debug.Assert(flatMethods.Length == flatVersions.Length 
+                        && flatVersions.Length == flatValues.Length 
+                        && flatValues.Length == flatActives.Length);
 
             return Enumerable.Range(0, flatMethods.Length)
-                             .Select(
-                                 index =>
-                                 new TimestampedPropertyVersionDelta(flatValues[index], flatMethods[index],
-                                                                     flatVersions[index], flatActives[index]))
+                             .Select(index => new TimestampedPropertyVersionDelta(flatValues[index], 
+                                                                                  flatMethods[index],
+                                                                                  flatVersions[index], 
+                                                                                  flatActives[index]))
                              .ToArray();
                 //never yield return new! those three keywords should be banned when used in succession!
-        }
-
-        internal static bool IsAction<TActionInput>(this object argument, Action<TActionInput> action)
-        {
-            var cast = argument as Action<TActionInput>;
-            if (cast == null) return false;
-
-            return cast.Equals(action);
         }
 
         public static IVersionControlNode CreateAndAddVersioningChildTo(
@@ -90,26 +123,6 @@ namespace VersionCommander.UnitTests.TestingAssists
         {
             return propertyPointer.Invoke(CreateWithNonDefaultProperties<TBuildable>());
         }
-
-        public static IProxyFactory MakeConfiguredProxyFactory()
-        {
-            var factory = A.Fake<IProxyFactory>();
-            FakeProxyFactoryProvidedControlNode = A.Fake<IVersionControlNode>();
-            FakeProxyFactoryProvidedPropertyBag = A.Fake<FakeFlatPropertyBag>();
-
-            A.CallTo(() => factory.CreateVersioning<FlatPropertyBag>(null, null, null))
-             .WithAnyArguments()
-             .Returns(FakeProxyFactoryProvidedPropertyBag);
-
-            A.CallTo(() => FakeProxyFactoryProvidedPropertyBag.GetVersionControlNode())
-             .WithAnyArguments()
-             .Returns(FakeProxyFactoryProvidedControlNode);
-
-            return factory;
-        }
-
-        public static FakeFlatPropertyBag FakeProxyFactoryProvidedPropertyBag { get; private set; }
-        public static IVersionControlNode FakeProxyFactoryProvidedControlNode { get; private set; }
 
         public static TimestampedPropertyVersionDelta MakeDontCareChange<TContent>()
         {

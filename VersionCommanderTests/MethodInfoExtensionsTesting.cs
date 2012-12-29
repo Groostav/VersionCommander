@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
 using NUnit.Framework;
@@ -24,6 +25,20 @@ namespace VersionCommander.UnitTests
             public void AGenericMethod<Titem>(Titem item)
             {
                 throw new NotImplementedException();
+            }
+
+            public int AProperty { get; set; }
+
+            public int this[int index] 
+            {
+                get { throw new NotImplementedException(); }
+                set { throw new NotImplementedException(); }
+            }
+
+            public int this[string index]
+            {
+                get { throw new NotImplementedException(); }
+                set { throw new NotImplementedException(); }
             }
         }
 
@@ -51,6 +66,21 @@ namespace VersionCommander.UnitTests
 
             methodInfo.Name.Should().Be("StaticTestMethod");
             methodInfo.IsStatic.Should().BeTrue();
+        }
+
+        [Test]
+        public void GetPropertyInfo_should_return_property_info_for_simple_property()
+        {
+            var propInfo = MethodInfoExtensions.GetPropertyInfo<TestClass, int>(x => x.AProperty);
+            propInfo.Name.Should().Be("AProperty");
+        }
+
+        
+        [Test]
+        public void GetPropertyInfo_should_return_method_info_for_indexer()
+        {
+            var propInfo = MethodInfoExtensions.GetPropertyInfo<TestClass, int>(x => x[0]);
+            propInfo.Name.Should().Be("Item");
         }
     }
 }

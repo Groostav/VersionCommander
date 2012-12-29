@@ -3,32 +3,23 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
-using Castle.Core.Internal;
 using VersionCommander.Implementation.Extensions;
 using VersionCommander.Implementation.Visitors;
 
 namespace VersionCommander.Implementation
 {
     [ThereBeDragons("No tests, no uses, methods that thrni")]
-    public class VersioningList<TElement> : IList<TElement>, IVersionControlNode, ICloneable
+    public class VersioningList<TElement> : VersionControlNodeBase, IList<TElement>, IVersionControlNode, ICloneable
         where TElement : IVersionablePropertyBag
     {
-        public void RollbackTo(long targetVersion)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IVersionControlNode CurrentDepthCopy()
-        {
-            return new VersioningList<TElement>(this);
-        }
-
-        public IList<IVersionControlNode> Children { get; set; }
-        public IEnumerable<IVersionControlNode> AllDescendents { get {throw new NotImplementedException();} private set {throw new NotImplementedException();} }
-        public IVersionControlNode Parent { get; set; }
-
-        private readonly IList<TElement> _backingList;
+        private readonly MethodInfo AddMethod =  MethodInfoExtensions.GetMethodInfo<IList<TElement>>(list => list.Add(default(TElement)));
+        private readonly MethodInfo ClearMethod = MethodInfoExtensions.GetMethodInfo<IList<TElement>>(list => list.Clear());
+        private readonly MethodInfo RemoveMethod = MethodInfoExtensions.GetMethodInfo<IList<TElement>>(list => list.Remove(default(TElement)));
+        private readonly MethodInfo IndexSetMethod = MethodInfoExtensions.GetPropertyInfo<IList<TElement>, TElement>(list => list[0]).GetSetMethod();
+            
+        [ThereBeDragons("this is broken, this isnt a property delta.")]
         private readonly List<TimestampedPropertyVersionDelta> _versionDeltas;
+        private readonly IList<TElement> _backingList;
 
         public VersioningList(VersioningList<TElement> toCopy)
         {
@@ -58,9 +49,7 @@ namespace VersionCommander.Implementation
         public void Add(TElement item)
         {
             TryAddToChildren(item);
-            _versionDeltas.Add(new TimestampedPropertyVersionDelta(item,
-                                                                   MethodInfoExtensions.GetMethodInfo<IList<TElement>>(list => list.Add(default(TElement))), 
-                                                                   Stopwatch.GetTimestamp()));
+            _versionDeltas.Add(new TimestampedPropertyVersionDelta(item, AddMethod, Stopwatch.GetTimestamp()));
             _backingList.Add(item);
         }
 
@@ -68,9 +57,7 @@ namespace VersionCommander.Implementation
         {
             _backingList.Clear();
             Children.Clear();
-            _versionDeltas.Add(new TimestampedPropertyVersionDelta(new object[0], 
-                                                                   MethodInfoExtensions.GetMethodInfo<IList<TElement>>(list => list.Add(default(TElement))),
-                                                                   Stopwatch.GetTimestamp()));
+            _versionDeltas.Add(new TimestampedPropertyVersionDelta(new object[0], ClearMethod, Stopwatch.GetTimestamp()));
         }
 
         public bool Contains(TElement item)
@@ -90,6 +77,7 @@ namespace VersionCommander.Implementation
             if (wasRemoved)
             {
                 TryAddToChildren(item);
+                _versionDeltas.Add(new TimestampedPropertyVersionDelta(item, RemoveMethod, Stopwatch.GetTimestamp()));
             }
             return wasRemoved;
         }
@@ -134,23 +122,28 @@ namespace VersionCommander.Implementation
         #endregion
 
         #region IVersionControlNode
-        public void Accept(IPropertyTreeVisitor visitor)
-        {
-            visitor.RunOn(this);
-            Children.ForEach(node => node.Accept(visitor));
-        }
 
-        public IList<TimestampedPropertyVersionDelta> Mutations 
+        public override IList<TimestampedPropertyVersionDelta> Mutations 
         { 
             get { return _versionDeltas; } 
         }
 
-        public object Get(PropertyInfo targetProperty, long version)
+        public override void RollbackTo(long targetVersion)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override object CurrentDepthCopy()
+        {
+            return new VersioningList<TElement>(this);
+        }
+
+        public override object Get(PropertyInfo targetProperty, long version)
         {
             throw new NotImplementedException("this call shouldn't have been made by anybody, as list props are immutable");
         }
 
-        public void Set(PropertyInfo targetProperty, object value, long version)
+        public override void Set(PropertyInfo targetProperty, object value, long version)
         {
             throw new NotImplementedException("this call shouldn't have been made by anybody, as list props are immutable");
         }

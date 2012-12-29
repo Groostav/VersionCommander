@@ -63,12 +63,11 @@ namespace VersionCommander.Implementation.Extensions
         public static PropertyInfo GetParentProperty(this MethodInfo method)
         {
             if (method == null) throw new ArgumentNullException("method");
+            var takesArg = method.GetParameters().Length == 1;
+            var hasReturn = method.ReturnType != typeof(void);
+            if (!(takesArg || hasReturn)) return null;
 
-            bool takesArg = method.GetParameters().Length == 1;
-            bool hasReturn = method.ReturnType != typeof(void);
-            if ( ! (hasReturn ^ takesArg)) return null;
-
-            if (takesArg)
+            if (takesArg && !hasReturn)
             {
                 return method.DeclaringType.GetProperties().FirstOrDefault(prop => prop.GetSetMethod() == method);
             }
@@ -139,12 +138,34 @@ namespace VersionCommander.Implementation.Extensions
 
         private static PropertyInfo GetPropertyInfo(LambdaExpression propertyLinq)
         {
-            var expression = propertyLinq.Body as MemberExpression;
-            if (expression == null)
+            var call = propertyLinq.Body as MethodCallExpression;
+            if (call != null)
             {
-                throw new ArgumentException("Invalid Expression. Expression should consist of a Property-chain only.");
+                var parentProperty = call.Method.GetParentProperty();
+                if (parentProperty != null)
+                {
+                    return parentProperty;
+                }
+
+                throw new ArgumentException(string.Format("Expression is a method call, not a property expression."));
             }
-            return expression.Member as PropertyInfo; //this will grab the most-rightward property.
+
+            var member = propertyLinq.Body as MemberExpression;
+            if (member == null)
+            {
+                throw new ArgumentException(string.Format("Expression is not a member expression (it is a {0} expression). " +
+                                                          "Expression should consist of a Property-getter call only.",
+                                                          propertyLinq.Body.NodeType));
+            }
+            var property = member.Member as PropertyInfo;
+            if (property == null)
+            {
+                throw new ArgumentException(string.Format("Expression is not a property-member expression (it is a {0} expression). " +
+                                                          "Expression should consist of a Property-getter call only.",
+                                                          member.NodeType));
+            }
+
+            return property;
         }
     }
 }

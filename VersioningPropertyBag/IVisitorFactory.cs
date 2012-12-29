@@ -6,26 +6,26 @@ namespace VersionCommander.Implementation
 {
     public interface IVisitorFactory
     {
-        IPropertyTreeVisitor MakeVisitor<TVisitor>()
-            where TVisitor : IPropertyTreeVisitor, new();
+        IVersionControlTreeVisitor MakeVisitor<TVisitor>()
+            where TVisitor : IVersionControlTreeVisitor, new();
 
-        IPropertyTreeVisitor MakeRollbackVisitor(long targetVersion);
-        IPropertyTreeVisitor MakeDeltaApplicationVisitor(bool includeDescendents, bool makeActive, MethodInfo targetSite);
+        IVersionControlTreeVisitor MakeRollbackVisitor(long targetVersion);
+        IVersionControlTreeVisitor MakeDeltaApplicationVisitor(bool includeDescendents, bool makeActive, MethodInfo targetSite);
     }
 
     public class VisitorFactory : IVisitorFactory
     {
-        public IPropertyTreeVisitor MakeVisitor<TVisitor>() where TVisitor : IPropertyTreeVisitor, new()
+        public IVersionControlTreeVisitor MakeVisitor<TVisitor>() where TVisitor : IVersionControlTreeVisitor, new()
         {
             return new TVisitor();
         }
 
-        public IPropertyTreeVisitor MakeRollbackVisitor(long targetVersion)
+        public IVersionControlTreeVisitor MakeRollbackVisitor(long targetVersion)
         {
             return new RollbackVisitor(targetVersion);
         }
 
-        public IPropertyTreeVisitor MakeDeltaApplicationVisitor(bool includeDescendents, bool makeActive, MethodInfo targetSite)
+        public IVersionControlTreeVisitor MakeDeltaApplicationVisitor(bool includeDescendents, bool makeActive, MethodInfo targetSite)
         {
             return new DeltaApplicationVisitor(includeDescendents, makeActive, targetSite);
         }

@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using Castle.Core.Internal;
+using VersionCommander.Implementation.Extensions;
 using VersionCommander.Implementation.Visitors;
 
 namespace VersionCommander.Implementation
@@ -12,7 +11,7 @@ namespace VersionCommander.Implementation
         public IList<IVersionControlNode> Children { get; set; }
         public IVersionControlNode Parent { get; set; }
 
-        public void Accept(IPropertyTreeVisitor visitor)
+        public void Accept(IVersionControlTreeVisitor visitor)
         {
             visitor.RunOn(this);
             Children.ForEach(child => child.Accept(visitor));
@@ -20,7 +19,7 @@ namespace VersionCommander.Implementation
 
         public abstract void RollbackTo(long targetVersion);
 
-        public abstract IVersionControlNode CurrentDepthCopy();
+        public abstract object CurrentDepthCopy();
 
         public abstract IList<TimestampedPropertyVersionDelta> Mutations { get; }
 

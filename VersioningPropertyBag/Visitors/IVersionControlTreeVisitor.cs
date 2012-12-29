@@ -1,6 +1,6 @@
 ﻿namespace VersionCommander.Implementation.Visitors
 {
-    public interface IPropertyTreeVisitor
+    public interface IVersionControlTreeVisitor
     {
         void RunOn(IVersionControlNode controlNode);
     }

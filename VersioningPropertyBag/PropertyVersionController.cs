@@ -85,9 +85,9 @@ namespace VersionCommander.Implementation
             Accept(_visitorFactory.MakeDeltaApplicationVisitor(includeDescendents: false, makeActive: true, targetSite:targetSetter));
         }
 
-        public override IVersionControlNode CurrentDepthCopy()
+        public override object CurrentDepthCopy()
         {
-            return _proxyFactory.CreateVersioning(_content, _cloneFactory, _mutations.Select(mutation => mutation.Clone())).VersionControlNode();
+            return _proxyFactory.CreateVersioning(_content, _cloneFactory, _mutations.Select(mutation => mutation.Clone()));
             //BUG: this doesnt seem right, it should want the whole proxy, not just its controller, 
             //because the controller cant link back to the proxy.
         }

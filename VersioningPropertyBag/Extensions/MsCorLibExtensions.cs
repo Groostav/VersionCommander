@@ -11,11 +11,27 @@ namespace VersionCommander.Implementation.Extensions
             return thisKeyItemSet.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
 
+        public static bool IsSupersetOf<TElement>(this IEnumerable<TElement> source,
+                                                  IEnumerable<TElement> candidateSubset)
+        {
+            return candidateSubset.All(source.Contains);
+        }
+
         public static void AddRange<TItem>(this ICollection<TItem> collection, IEnumerable<TItem> itemsToAdd)
         {
             foreach (var item in itemsToAdd)
             {
                 collection.Add(item);
+            }
+        }
+
+        public static void ForEach<TElement>(this IEnumerable<TElement> source, Action<TElement> action)
+        {
+            if(source == null) throw new ArgumentNullException("source");
+
+            foreach (var element in source)
+            {
+                action.Invoke(element);
             }
         }
 

@@ -67,6 +67,9 @@
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="AutoMapper">
       <HintPath>..\packages\AutoMapper.2.2.0\lib\net40\AutoMapper.dll</HintPath>
@@ -91,6 +94,7 @@
     <Compile Include="NullObjects\NullVersionControlProvider.cs" />
     <Compile Include="IVersionControlProvider.cs" />
     <Compile Include="IVisitorFactory.cs" />
+    <Compile Include="NullObjects\NullProxyFactory.cs" />
     <Compile Include="ProxyFactory.cs" />
     <Compile Include="Visitors\DeltaApplicationVisitor.cs" />
     <Compile Include="Visitors\DescendentAggregatorVisitor.cs" />
@@ -99,7 +103,7 @@
     <Compile Include="Visitors\FindAndCopyVersioningChildVisitor.cs" />
     <Compile Include="Extensions\ICloneable.cs" />
     <Compile Include="Extensions\IImmutable.cs" />
-    <Compile Include="Visitors\IPropertyTreeVisitor.cs" />
+    <Compile Include="Visitors\IVersionControlTreeVisitor.cs" />
     <Compile Include="IVersionablePropertyBag.cs" />
     <Compile Include="IVersionController.cs" />
     <Compile Include="IVersionControlNode.cs" />

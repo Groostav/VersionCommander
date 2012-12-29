@@ -6,7 +6,7 @@ using VersionCommander.Implementation.Extensions;
 
 namespace VersionCommander.Implementation.Visitors
 {
-    public class DeltaApplicationVisitor : IPropertyTreeVisitor
+    public class DeltaApplicationVisitor : IVersionControlTreeVisitor
     {
         private readonly bool _includeDescendents;
         private readonly bool _newStatus;

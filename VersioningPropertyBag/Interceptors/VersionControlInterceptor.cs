@@ -67,7 +67,7 @@ namespace VersionCommander.Implementation
         {
             return invocation.Method.IsPropertySetter() 
                    && invocation.Arguments.Single() != null
-                   && invocation.Arguments.Single().GetType().CanInterfaceAs(typeof(IVersionController<>))
+                   && invocation.Arguments.Single().GetType().CanInterfaceAs(typeof(IVersionControlProvider))
                    && invocation.TargetType == typeof(TSubject);
         }
     }

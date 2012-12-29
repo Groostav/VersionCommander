@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace VersionCommander.Implementation.Visitors
 {
-    public class DescendentAggregatorVisitor : IPropertyTreeVisitor
+    public class DescendentAggregatorVisitor : IVersionControlTreeVisitor
     {
         public static IEnumerable<IVersionControlNode> GetDescendentsOf(IVersionControlNode targetNode)
         {

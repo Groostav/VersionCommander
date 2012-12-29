@@ -131,6 +131,7 @@ namespace VersionCommander.IntegrationTests
         }
         
         [Test]
+        //THIS IS PRETTY FUCKIN COOL.
         public void when_asking_for_a_previous_version_of_the_parent_it_should_bundle_a_previous_version_of_all_children()
         {
             var sample = New.Versioning<DeepPropertyBag>(bag =>

@@ -2,7 +2,7 @@
 
 namespace VersionCommander.Implementation.Visitors
 {
-    public class RollbackVisitor : IPropertyTreeVisitor
+    public class RollbackVisitor : IVersionControlTreeVisitor
     {
         private readonly long _targetTime;
 
