@@ -45,6 +45,9 @@
     <Reference Include="FakeItEasy">
       <HintPath>..\packages\FakeItEasy.1.7.4626.65\lib\NET40\FakeItEasy.dll</HintPath>
     </Reference>
+    <Reference Include="FizzWare.NBuilder">
+      <HintPath>..\packages\NBuilder.3.0.1.1\lib\FizzWare.NBuilder.dll</HintPath>
+    </Reference>
     <Reference Include="FluentAssertions">
       <HintPath>..\packages\FluentAssertions.2.0.0.1\lib\net45\FluentAssertions.dll</HintPath>
     </Reference>
@@ -57,6 +60,7 @@
     <Reference Include="Machine.Specifications.TDNetRunner">
       <HintPath>..\packages\Machine.Specifications.0.5.10\lib\net40\Machine.Specifications.TDNetRunner.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="nunit.framework">
       <HintPath>..\packages\NUnit.2.6.2\lib\nunit.framework.dll</HintPath>
     </Reference>
@@ -74,7 +78,6 @@
     <Compile Include="TestingAssists\TestHelper.cs" />
     <Compile Include="TestingAssists\DeepPropertyBag.cs" />
     <Compile Include="TestingBasicC#Knowhow.cs" />
-    <Compile Include="UsageDemo.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\VersionCommander\VersionCommander.csproj">

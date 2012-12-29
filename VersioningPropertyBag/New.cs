@@ -30,17 +30,18 @@ namespace VersionCommander.Implementation
         }
 
         public static TSubject MakeVersioningProxy<TSubject>(TSubject baseObject,
-                                                              ICloneFactory<TSubject> cloneFactory,
-                                                              IEnumerable<TimestampedPropertyVersionDelta> existingModifications = null)
+                                                             ICloneFactory<TSubject> cloneFactory,
+                                                             IEnumerable<TimestampedPropertyVersionDelta> existingModifications = null)
             where TSubject : class
         {
-            var repository = new PropertyVersionController<TSubject>(baseObject, 
+            var controller = new PropertyVersionController<TSubject>(baseObject, 
                                                                      cloneFactory, 
                                                                      existingModifications,
-                                                                     new VisitorFactory());
+                                                                     new VisitorFactory(),
+                                                                     new ProxyFactory());
 
-            var subjectInterceptor = new SubjectPropertyInterceptor<TSubject>(repository);
-            var versionControlInterceptor = new VersionControlInterceptor<TSubject>(repository);
+            var subjectInterceptor = new SubjectPropertyInterceptor<TSubject>(controller);
+            var versionControlInterceptor = new VersionControlInterceptor<TSubject>(controller);
 
             var proxy = Generator.CreateClassProxyWithTarget(classToProxy:typeof (TSubject),
                                                              additionalInterfacesToProxy:new[]

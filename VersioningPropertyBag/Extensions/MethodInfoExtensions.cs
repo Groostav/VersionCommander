@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -20,16 +21,33 @@ namespace VersionCommander.Implementation.Extensions
             }
         }
 
+        [Pure]
+        public static PropertyInfo PropertyInfoFor<TSubject, TResult>(this TSubject subject,
+                                                                      Expression<Func<TSubject, TResult>> propertyPointer)
+        {
+            return GetPropertyInfo(propertyPointer);
+        }
+
+        [Pure]
         public static bool IsPropertySetter(this MethodInfo method)
         {
+            Contract.Requires(method != null && method.DeclaringType != null && method.DeclaringType.GetProperties() != null);
+            Contract.Ensures(method.GetParentProperty() != null || Contract.Result<bool>() == false);
+
             return method.DeclaringType.GetProperties().Any(prop => prop.GetSetMethod() == method);
         }
 
+        [Pure]
         public static bool IsPropertyGetter(this MethodInfo method)
         {
+            Contract.Requires(method != null && method.DeclaringType != null);
+            Contract.Ensures(method.GetParentProperty() != null || Contract.Result<bool>() == false);
+
             return method.DeclaringType.GetProperties().Any(prop => prop.GetGetMethod() == method);
         }
 
+
+        [Pure]
         public static PropertyInfo GetParentProperty(this MethodInfo method)
         {
             if (method == null) throw new ArgumentNullException("method");

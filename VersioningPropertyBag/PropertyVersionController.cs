@@ -15,17 +15,18 @@ namespace VersionCommander.Implementation
         where TSubject : class
     {
         private readonly List<TimestampedPropertyVersionDelta> _mutations;
-        private readonly IEnumerable<PropertyInfo> _knownProperties;
         private readonly TSubject _content;
         private readonly ICloneFactory<TSubject> _cloneFactory;
         private readonly IVisitorFactory _visitorFactory;
+        private readonly IProxyFactory _proxyFactory;
 
         public override IList<TimestampedPropertyVersionDelta> Mutations { get { return _mutations; } } 
 
         public PropertyVersionController(TSubject content,
                                          ICloneFactory<TSubject> cloneFactory,
                                          IEnumerable<TimestampedPropertyVersionDelta> existingChanges,
-                                         IVisitorFactory visitorFactory)
+                                         IVisitorFactory visitorFactory,
+                                         IProxyFactory proxyFactory)
         {
             Children =  new List<IVersionControlNode>();
             _mutations = new List<TimestampedPropertyVersionDelta>();
@@ -33,13 +34,12 @@ namespace VersionCommander.Implementation
             _content = content;
             _cloneFactory = cloneFactory;
             _visitorFactory = visitorFactory;
+            _proxyFactory = proxyFactory;
 
             if (existingChanges != null)
             {
                 _mutations.AddRange(existingChanges);
             }
-
-            _knownProperties = typeof (TSubject).GetProperties();
         }
 
         public override void RollbackTo(long targetVersion)
@@ -49,30 +49,31 @@ namespace VersionCommander.Implementation
 
         public void UndoLastChange()
         {
-            Accept(_visitorFactory.MakeDeltaApplicationVisitor(includeDescendents:true, isNowActive:false, targetSite: null));
+            Accept(_visitorFactory.MakeDeltaApplicationVisitor(includeDescendents:true, makeActive:false, targetSite: null));
         }
 
         public void UndoLastAssignment()
         {
-            Accept(_visitorFactory.MakeDeltaApplicationVisitor(includeDescendents:false, isNowActive:false, targetSite: null));
+            Accept(_visitorFactory.MakeDeltaApplicationVisitor(includeDescendents:false, makeActive:false, targetSite: null));
         }
 
         public void UndoLastAssignmentTo<TTarget>(Expression<Func<TSubject, TTarget>> targetSite)
         {
             var targetProperty = GetRequestedMember(targetSite);
+            EnsureCanUndoChangeTo(targetProperty);
             var targetSetter = targetProperty.GetSetMethod();
 
-            Accept(_visitorFactory.MakeDeltaApplicationVisitor(includeDescendents: false, isNowActive: true, targetSite:targetSetter));
+            Accept(_visitorFactory.MakeDeltaApplicationVisitor(includeDescendents: false, makeActive:false, targetSite:targetSetter));
         }
 
         public void RedoLastChange()
         {
-            Accept(_visitorFactory.MakeDeltaApplicationVisitor(includeDescendents:true, isNowActive:true, targetSite:null));
+            Accept(_visitorFactory.MakeDeltaApplicationVisitor(includeDescendents:true, makeActive:true, targetSite:null));
         }
 
         public void RedoLastAssignment()
         {
-            Accept(_visitorFactory.MakeDeltaApplicationVisitor(includeDescendents:false, isNowActive:true, targetSite:null));
+            Accept(_visitorFactory.MakeDeltaApplicationVisitor(includeDescendents:false, makeActive:true, targetSite:null));
         }
 
         public void RedoLastAssignmentTo<TTarget>(Expression<Func<TSubject, TTarget>> targetSite)
@@ -81,12 +82,14 @@ namespace VersionCommander.Implementation
             EnsureCanRedoChangeTo(targetProperty);
             var targetSetter = targetProperty.GetSetMethod();
 
-            Accept(_visitorFactory.MakeDeltaApplicationVisitor(includeDescendents: false, isNowActive: true, targetSite:targetSetter));
+            Accept(_visitorFactory.MakeDeltaApplicationVisitor(includeDescendents: false, makeActive: true, targetSite:targetSetter));
         }
 
         public override IVersionControlNode CurrentDepthCopy()
         {
-            return New.Versioning<TSubject>(_content, _cloneFactory, _mutations.Select(mutation => mutation.Clone())).VersionControlNode();
+            return _proxyFactory.CreateVersioning(_content, _cloneFactory, _mutations.Select(mutation => mutation.Clone())).VersionControlNode();
+            //BUG: this doesnt seem right, it should want the whole proxy, not just its controller, 
+            //because the controller cant link back to the proxy.
         }
 
         public TSubject GetCurrentVersion()
@@ -96,7 +99,8 @@ namespace VersionCommander.Implementation
        
         public TSubject WithoutModificationsPast(long ticks)
         {
-            var clone = New.Versioning<TSubject>(_content, _cloneFactory, Mutations);
+            var clone = _proxyFactory.CreateVersioning(_content, _cloneFactory, Mutations);
+            clone.VersionControlNode().Children.AddRange(Children);
             clone.VersionControlNode().Accept(_visitorFactory.MakeVisitor<FindAndCopyVersioningChildVisitor>());
             clone.VersionControlNode().Accept(_visitorFactory.MakeRollbackVisitor(ticks));
 

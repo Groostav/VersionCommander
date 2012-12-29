@@ -19,14 +19,15 @@ namespace VersionCommander.UnitTests
     public class PropertyVersionControllerFixture
     {
         [Test]
-        public void when_using_explicit_setter()
+        public void when_using_explicit_setter_on_new_object()
         {
             //setup
-            var baseObject = new FlatPropertyBag();
+            var baseObject = TestHelper.CreateWithNonDefaultProperties<FlatPropertyBag>();
             var controller = new PropertyVersionController<FlatPropertyBag>(baseObject,
                                                                             TestHelper.DefaultCloneFactoryFor<FlatPropertyBag>(),
                                                                             TestHelper.EmptyChangeSet(),
-                                                                            TestHelper.FakeVisitorFactory());
+                                                                            TestHelper.FakeVisitorFactory(),
+                                                                            TestHelper.FakeProxyFactory());
             const string changedValue = "Change!";
 
             //act
@@ -37,23 +38,66 @@ namespace VersionCommander.UnitTests
         }
 
         [Test]
-        public void when_using_explicit_getter()
+        public void when_using_explicit_setter_on_object_with_history()
+        {
+            //setup
+            var baseObject = TestHelper.CreateWithNonDefaultProperties<FlatPropertyBag>();
+            var targetSite = baseObject.PropertyInfoFor(x => x.StringProperty).GetSetMethod();
+            var changeSet = TestHelper.ChangeSet("Original", targetSite, 1L, isActive:false);
+            var controller = new PropertyVersionController<FlatPropertyBag>(baseObject,
+                                                                            TestHelper.DefaultCloneFactoryFor<FlatPropertyBag>(),
+                                                                            changeSet,
+                                                                            TestHelper.FakeVisitorFactory(),
+                                                                            TestHelper.FakeProxyFactory());
+            const string changedValue = "Change!";
+
+            //act
+            controller.Set(baseObject.PropertyInfoFor(x => x.StringProperty), changedValue, 1);
+
+            //assert
+            controller.Mutations.Should().ContainSingle(mutation => mutation.Arguments.Single().Equals(changedValue));
+            controller.Mutations.Should().HaveCount(1);
+        }
+
+        [Test]
+        public void when_using_explicit_getter_on_object_with_history()
         {
             //setup
             const string originalValue = "Original!";
-            var baseObject = new FlatPropertyBag() { StringProperty = originalValue };
+            var baseObject = TestHelper.CreateWithNonDefaultProperties<FlatPropertyBag>();
             var targetSite = baseObject.PropertyInfoFor(x => x.StringProperty).GetSetMethod();
 
             var controller = new PropertyVersionController<FlatPropertyBag>(baseObject,
                                                                             TestHelper.DefaultCloneFactoryFor<FlatPropertyBag>(),
                                                                             TestHelper.ChangeSet(originalValue, targetSite, version:1),
-                                                                            TestHelper.FakeVisitorFactory());
+                                                                            TestHelper.FakeVisitorFactory(),
+                                                                            TestHelper.FakeProxyFactory());
 
             //act
             var retrievedValue = controller.Get(targetSite.GetParentProperty());
 
             //assert
             retrievedValue.Should().Be(originalValue);
+        }
+        
+        [Test]
+        public void when_using_explicit_getter_on_new_object()
+        {
+            //setup
+            var baseObject = TestHelper.CreateWithNonDefaultProperties<FlatPropertyBag>();
+            var targetSite = baseObject.PropertyInfoFor(x => x.StringProperty).GetSetMethod();
+
+            var controller = new PropertyVersionController<FlatPropertyBag>(baseObject,
+                                                                            TestHelper.DefaultCloneFactoryFor<FlatPropertyBag>(),
+                                                                            TestHelper.EmptyChangeSet(),
+                                                                            TestHelper.FakeVisitorFactory(),
+                                                                            TestHelper.FakeProxyFactory());
+
+            //act
+            var retrievedValue = controller.Get(targetSite.GetParentProperty());
+
+            //assert
+            retrievedValue.Should().Be(TestHelper.ProvidedNonDefaultFor<FlatPropertyBag, string>(x => x.StringProperty));
         }
 
         [Test]
@@ -63,7 +107,8 @@ namespace VersionCommander.UnitTests
             var controller = new PropertyVersionController<FlatPropertyBag>(new FlatPropertyBag(), 
                                                                             TestHelper.DefaultCloneFactoryFor<FlatPropertyBag>(),
                                                                             TestHelper.EmptyChangeSet(),
-                                                                            TestHelper.FakeVisitorFactory());
+                                                                            TestHelper.FakeVisitorFactory(),
+                                                                            TestHelper.FakeProxyFactory());
             var fakeChildren = new[] {A.Fake<IVersionControlNode>(), A.Fake<IVersionControlNode>()};
             var fakeVisitor = A.Fake<IPropertyTreeVisitor>();
             controller.Children.AddRange(fakeChildren);
@@ -87,7 +132,8 @@ namespace VersionCommander.UnitTests
             var controller = new PropertyVersionController<FlatPropertyBag>(baseObject,
                                                                             TestHelper.DefaultCloneFactoryFor<FlatPropertyBag>(),
                                                                             TestHelper.EmptyChangeSet(),
-                                                                            visitorFactory);
+                                                                            visitorFactory,
+                                                                            TestHelper.FakeProxyFactory());
             var fakeChild = TestHelper.CreateAndAddVersioningChildTo(controller);
 
             const long constructionTimeStamp = 2;
@@ -102,11 +148,21 @@ namespace VersionCommander.UnitTests
         }
 
         [Test]
-        public void when_getting_a_specific_version_branch()
+        public void when_getting_version_WithoutModifcationsPast_specific_version()
         {
             //setup
-            var baseObject = new FlatPropertyBag();
+            var baseObject = TestHelper.CreateWithNonDefaultProperties<FlatPropertyBag>();
             var targetSite = baseObject.PropertyInfoFor(x => x.StringProperty).GetSetMethod();
+            var visitorFactory = TestHelper.FakeVisitorFactory();
+            var proxyFactory = TestHelper.FakeProxyFactory();
+            var fakeFindAndCopy = A.Fake<IPropertyTreeVisitor>();
+            var fakeRollback = A.Fake<IPropertyTreeVisitor>();
+            var fakeProxyClone = A.Fake<FlatPropertyBag>(); //holy fuck. I give up man.
+
+            A.CallTo(() => proxyFactory.CreateVersioning<FlatPropertyBag>(null, null, null)).WithAnyArguments().Returns(fakeProxyClone);
+            A.CallTo(() => visitorFactory.MakeVisitor<FindAndCopyVersioningChildVisitor>()).Returns(fakeFindAndCopy);
+            A.CallTo(() => visitorFactory.MakeRollbackVisitor(0)).WithAnyArguments().Returns(fakeRollback);
+
             const int targetVersion = 2;
             const string targetVersionValue = "Two!";
 
@@ -117,13 +173,22 @@ namespace VersionCommander.UnitTests
             var controller = new PropertyVersionController<FlatPropertyBag>(baseObject,
                                                                             TestHelper.DefaultCloneFactoryFor<FlatPropertyBag>(),
                                                                             changeSet,
-                                                                            TestHelper.FakeVisitorFactory());
+                                                                            visitorFactory,
+                                                                            TestHelper.FakeProxyFactory());
+            var fakeChildren = new[] {A.Fake<IVersionControlNode>(), A.Fake<IVersionControlNode>()}.ToList();
+            controller.Children = fakeChildren;
 
             //act
             var retrievedVersion = controller.WithoutModificationsPast(targetVersion).StringProperty;
 
             //assert
-            retrievedVersion.Should().Be(targetVersionValue);
+            A.CallTo(() => proxyFactory.CreateVersioning<FlatPropertyBag>(null, null, null))
+                                       .WhenArgumentsMatch(args => args[0] == baseObject && args[1] == visitorFactory)
+                                       .MustHaveHappened();
+            A.CallTo(() => visitorFactory.MakeVisitor<FindAndCopyVersioningChildVisitor>()).MustHaveHappened();
+            A.CallTo(() => visitorFactory.MakeRollbackVisitor(targetVersion)).MustHaveHappened();
+            fakeChildren.ForEach(child => A.CallTo(() => child.Accept(fakeFindAndCopy)).WithAnyArguments().MustHaveHappened()); 
+            fakeChildren.ForEach(child => A.CallTo(() => child.Accept(fakeRollback)).WithAnyArguments().MustHaveHappened()); 
         }
 
         [Test]
@@ -138,7 +203,8 @@ namespace VersionCommander.UnitTests
             var controller = new PropertyVersionController<FlatPropertyBag>(baseObject,
                                                                             TestHelper.DefaultCloneFactoryFor<FlatPropertyBag>(),
                                                                             TestHelper.ChangeSet("Change!", targetSite, targetVersion + 1),
-                                                                            TestHelper.FakeVisitorFactory());
+                                                                            TestHelper.FakeVisitorFactory(),
+                                                                            TestHelper.FakeProxyFactory());
             //act
             controller.RollbackTo(targetVersion);
 
@@ -150,7 +216,7 @@ namespace VersionCommander.UnitTests
         public void when_rolling_back_to_specific_version()
         {
             //setup
-            var baseObject = new FlatPropertyBag();
+            var baseObject = TestHelper.CreateWithNonDefaultProperties<FlatPropertyBag>();
             var targetSite = baseObject.PropertyInfoFor(x => x.StringProperty).GetSetMethod();
             const int targetVersion = 2;
             const string targetVersionValue = "Two!";
@@ -162,7 +228,8 @@ namespace VersionCommander.UnitTests
             var controller = new PropertyVersionController<FlatPropertyBag>(baseObject,
                                                                             TestHelper.DefaultCloneFactoryFor<FlatPropertyBag>(),
                                                                             changeSet,
-                                                                            TestHelper.FakeVisitorFactory());
+                                                                            TestHelper.FakeVisitorFactory(),
+                                                                            TestHelper.FakeProxyFactory());
             //act
             controller.RollbackTo(targetVersion);
 
@@ -174,7 +241,7 @@ namespace VersionCommander.UnitTests
         public void when_undoing_assignment_to_child()
         {
             //setup
-            var baseObject = new FlatPropertyBag();
+            var baseObject = TestHelper.CreateWithNonDefaultProperties<FlatPropertyBag>();
             var targetSite = baseObject.PropertyInfoFor(x => x.StringProperty).GetSetMethod();
             const int targetVersion = 2;
             const string targetValue = "Two!";
@@ -186,7 +253,8 @@ namespace VersionCommander.UnitTests
             var controller = new PropertyVersionController<FlatPropertyBag>(baseObject,
                                                                             TestHelper.DefaultCloneFactoryFor<FlatPropertyBag>(),
                                                                             changeSet,
-                                                                            TestHelper.FakeVisitorFactory());
+                                                                            TestHelper.FakeVisitorFactory(),
+                                                                            TestHelper.FakeProxyFactory());
             //act
             controller.UndoLastAssignmentTo(self => self.StringProperty);
 
@@ -206,7 +274,8 @@ namespace VersionCommander.UnitTests
             var controller = new PropertyVersionController<DeepPropertyBag>(baseObject,
                                                                             TestHelper.DefaultCloneFactoryFor<DeepPropertyBag>(),
                                                                             TestHelper.ChangeSet(childObject, targetSite, 1),
-                                                                            TestHelper.FakeVisitorFactory());
+                                                                            TestHelper.FakeVisitorFactory(),
+                                                                            TestHelper.FakeProxyFactory());
             //act & assert
             Assert.Throws<UntrackedObjectException>(() => controller.UndoLastAssignmentTo(self => self.SpecialChild.StringProperty));
                 //intrestingly enough, I can actually get mildly better setup-act-assert segregation with a nasty try-catch block.
@@ -224,7 +293,8 @@ namespace VersionCommander.UnitTests
             var controller = new PropertyVersionController<DeepPropertyBag>(baseObject,
                                                                             TestHelper.DefaultCloneFactoryFor<DeepPropertyBag>(),
                                                                             TestHelper.EmptyChangeSet(),
-                                                                            TestHelper.FakeVisitorFactory());
+                                                                            TestHelper.FakeVisitorFactory(),
+                                                                            TestHelper.FakeProxyFactory());
             //act & assert
             Assert.Throws<UntrackedObjectException>(() => controller.UndoLastAssignmentTo(self => self));
         }
@@ -233,12 +303,13 @@ namespace VersionCommander.UnitTests
         public void when_undoing_assignment_to_property_with_no_setter()
         {
             //setup
-            var baseObject = new FlatPropertyBag();
+            var baseObject = TestHelper.CreateWithNonDefaultProperties<FlatPropertyBag>();
 
             var controller = new PropertyVersionController<FlatPropertyBag>(baseObject,
                                                                             TestHelper.DefaultCloneFactoryFor<FlatPropertyBag>(),
                                                                             TestHelper.EmptyChangeSet(),
-                                                                            TestHelper.FakeVisitorFactory());
+                                                                            TestHelper.FakeVisitorFactory(),
+                                                                            TestHelper.FakeProxyFactory());
             //act & assert
             Assert.Throws<UntrackedObjectException>(() => controller.UndoLastAssignmentTo(self => self.PropWithoutSetter));
         }
@@ -254,7 +325,8 @@ namespace VersionCommander.UnitTests
             var controller = new PropertyVersionController<FlatPropertyBag>(baseObject,
                                                                             TestHelper.DefaultCloneFactoryFor<FlatPropertyBag>(),
                                                                             TestHelper.ChangeSet(targetValue, targetSite, version: 1, isActive: false),
-                                                                            TestHelper.FakeVisitorFactory());
+                                                                            TestHelper.FakeVisitorFactory(),
+                                                                            TestHelper.FakeProxyFactory());
             //act
             controller.RedoLastAssignmentTo(x => x.StringProperty);
 
@@ -284,7 +356,8 @@ namespace VersionCommander.UnitTests
             var controller = new PropertyVersionController<FlatPropertyBag>(baseObject,
                                                                             TestHelper.DefaultCloneFactoryFor<FlatPropertyBag>(),
                                                                             changeSet,
-                                                                            TestHelper.FakeVisitorFactory());
+                                                                            TestHelper.FakeVisitorFactory(),
+                                                                            TestHelper.FakeProxyFactory());
             //act
             controller.RedoLastAssignmentTo(self => self.StringProperty);
 
@@ -304,7 +377,8 @@ namespace VersionCommander.UnitTests
             var controller = new PropertyVersionController<FlatPropertyBag>(baseObject,
                                                                             TestHelper.DefaultCloneFactoryFor<FlatPropertyBag>(),
                                                                             TestHelper.ChangeSet("undone value", targetSite, 1L, isActive: false),
-                                                                            TestHelper.FakeVisitorFactory());
+                                                                            TestHelper.FakeVisitorFactory(),
+                                                                            TestHelper.FakeProxyFactory());
             //act
             controller.Set(targetSite.GetParentProperty(), "New Value", 2L);
 
@@ -321,13 +395,14 @@ namespace VersionCommander.UnitTests
         public void when_rolling_back_unaltered_object()
         {
             //setup
-            var baseObject = new FlatPropertyBag();
+            var baseObject = TestHelper.CreateWithNonDefaultProperties<FlatPropertyBag>();
             var stringPropInfo = baseObject.PropertyInfoFor(x => x.StringProperty);
             var countPropInfo = baseObject.PropertyInfoFor(x => x.IntProperty);
             var controller = new PropertyVersionController<FlatPropertyBag>(baseObject,
                                                                             TestHelper.DefaultCloneFactoryFor<FlatPropertyBag>(),
                                                                             TestHelper.EmptyChangeSet(),
-                                                                            TestHelper.FakeVisitorFactory());
+                                                                            TestHelper.FakeVisitorFactory(),
+                                                                            TestHelper.FakeProxyFactory());
             //act
             controller.RollbackTo(0);
 
@@ -347,7 +422,8 @@ namespace VersionCommander.UnitTests
              var controller = new PropertyVersionController<DeepPropertyBag>(baseObject,
                                                                              TestHelper.DefaultCloneFactoryFor<DeepPropertyBag>(),
                                                                              TestHelper.ChangeSet(childNode, targetSite, version: 0),
-                                                                             TestHelper.FakeVisitorFactory());
+                                                                             TestHelper.FakeVisitorFactory(),
+                                                                            TestHelper.FakeProxyFactory());
              //act
             controller.GetCurrentVersion();
             
@@ -361,7 +437,7 @@ namespace VersionCommander.UnitTests
         public void when_editing_a_version_branch()
         {
             //setup
-            var baseObject = new FlatPropertyBag();
+            var baseObject = TestHelper.CreateWithNonDefaultProperties<FlatPropertyBag>();
             var targetSite = baseObject.PropertyInfoFor(x => x.StringProperty).GetSetMethod();
             const string originalValue = "One";
             const int targetVersion = 1;
@@ -369,7 +445,8 @@ namespace VersionCommander.UnitTests
             var controller = new PropertyVersionController<FlatPropertyBag>(baseObject,
                                                                             TestHelper.DefaultCloneFactoryFor<FlatPropertyBag>(),
                                                                             TestHelper.ChangeSet(originalValue, targetSite, targetVersion),
-                                                                            TestHelper.FakeVisitorFactory());
+                                                                            TestHelper.FakeVisitorFactory(),
+                                                                            TestHelper.FakeProxyFactory());
             //act
             var clone = controller.GetCurrentVersion();
             clone.StringProperty = "Something New";

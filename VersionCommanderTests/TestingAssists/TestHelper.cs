@@ -5,6 +5,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using FakeItEasy;
+using FizzWare.NBuilder;
 using VersionCommander.Implementation;
 using VersionCommander.Implementation.Extensions;
 
@@ -12,6 +13,8 @@ namespace VersionCommander.UnitTests.TestingAssists
 {
     public static class TestHelper
     {
+        public const string NonNullDefaultString = "Non Null Default";
+
         public static IEnumerable<TimestampedPropertyVersionDelta> EmptyChangeSet()
         {
             return Enumerable.Empty<TimestampedPropertyVersionDelta>();
@@ -36,6 +39,7 @@ namespace VersionCommander.UnitTests.TestingAssists
             return new[] {new TimestampedPropertyVersionDelta(value, method, version, isActive)};
         }
 
+        //FIXME this signature is disgusting.
         public static IEnumerable<TimestampedPropertyVersionDelta> ChangeSet(IEnumerable<object> values,
                                                                              IEnumerable<MethodInfo> methods,
                                                                              IEnumerable<long> versions,
@@ -67,14 +71,19 @@ namespace VersionCommander.UnitTests.TestingAssists
             controller.Children.Add(child);
             return child;
         }
-    }
 
-    public static class PropertyManagementExtensions
-    {
-        public static PropertyInfo PropertyInfoFor<TSubject, TResult>(this TSubject subject, 
-                                                                      Expression<Func<TSubject, TResult>> propertyPointer)
+        public static TBuildable CreateWithNonDefaultProperties<TBuildable>()
         {
-            return MethodInfoExtensions.GetPropertyInfo(propertyPointer);
+            return Builder<TBuildable>.CreateNew().Build();
+        }
+        public static TResult ProvidedNonDefaultFor<TBuildable, TResult>(Func<TBuildable, TResult> propertyPointer)
+        {
+            return propertyPointer.Invoke(CreateWithNonDefaultProperties<TBuildable>());
+        }
+
+        public static IProxyFactory FakeProxyFactory()
+        {
+            return A.Fake<IProxyFactory>();
         }
     }
 }

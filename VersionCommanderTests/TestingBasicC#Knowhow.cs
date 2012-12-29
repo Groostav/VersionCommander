@@ -8,6 +8,7 @@ using NUnit.Framework;
 using Castle.DynamicProxy;
 using VersionCommander.Implementation;
 using VersionCommander.Implementation.Extensions;
+using VersionCommander.Implementation.NullObjects;
 using VersionCommander.Implementation.Tests.TestingAssists;
 using VersionCommander.UnitTests.TestingAssists;
 
@@ -41,72 +42,76 @@ namespace VersionCommander.UnitTests
 //             }
          }
 
-        [TestFixture]
-        public class CSharpLanguageFeatureTesting
+         [SetUp]
+         public void Setup()
+         {
+             EqualsCallMe.WasCalled = false;
+             EmptyOverridingTypedEquality.EqualsLog.Clear();
+         }
+
+        private struct Base
         {
-            private struct Base
-            {
-            }
-            //ok, so structs cannot inherit, but they can implement interfaces...
+        }
+        //ok, so structs cannot inherit, but they can implement interfaces...
 //            private struct Derrived : Base
 //            {
 //            }
-            private struct CloneableStruct : ICloneable, IEquatable<CloneableStruct>
+        private struct CloneableStruct : ICloneable, IEquatable<CloneableStruct>
+        {
+            private readonly string _value;
+
+            public CloneableStruct(string value)
             {
-                private readonly string _value;
-
-                public CloneableStruct(string value)
-                {
-                    _value = value;
-                }
-
-                public object Clone()
-                {
-                    throw new NotImplementedException();
-                }
-
-                #region Equals nonsense
-
-                public bool Equals(CloneableStruct other)
-                {
-                    return string.Equals(_value, other._value);
-                }
-
-                public override bool Equals(object obj)
-                {
-                    if (ReferenceEquals(null, obj)) return false;
-                    return obj is CloneableStruct && Equals((CloneableStruct) obj);
-                }
-
-                public override int GetHashCode()
-                {
-                    return (_value != null ? _value.GetHashCode() : 0);
-                }
-
-                public static bool operator ==(CloneableStruct left, CloneableStruct right)
-                {
-                    return left.Equals(right);
-                }
-
-                public static bool operator !=(CloneableStruct left, CloneableStruct right)
-                {
-                    return !left.Equals(right);
-                }
-
-                #endregion
+                _value = value;
             }
 
-            [Test]
-            public void when_asing_a_struct_to_an_interface()
+            public object Clone()
             {
-                var cloneable = new CloneableStruct("not default");
-                var properCast = cloneable as ICloneable;
-                properCast.Should().NotBeNull();
-                properCast.Should().NotBe(default(CloneableStruct));
+                throw new NotImplementedException();
             }
 
-            //Wow, good on you C#, a compile time warning.
-            //woulda been nice if you didnt allow for explicit and implicit cast overrides tho.
+            #region Equals nonsense
+
+            public bool Equals(CloneableStruct other)
+            {
+                return string.Equals(_value, other._value);
+            }
+
+            public override bool Equals(object obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                return obj is CloneableStruct && Equals((CloneableStruct) obj);
+            }
+
+            public override int GetHashCode()
+            {
+                return (_value != null ? _value.GetHashCode() : 0);
+            }
+
+            public static bool operator ==(CloneableStruct left, CloneableStruct right)
+            {
+                return left.Equals(right);
+            }
+
+            public static bool operator !=(CloneableStruct left, CloneableStruct right)
+            {
+                return !left.Equals(right);
+            }
+
+            #endregion
+        }
+
+        [Test]
+        public void when_asing_a_struct_to_an_interface()
+        {
+            var cloneable = new CloneableStruct("not default");
+            var properCast = cloneable as ICloneable;
+            properCast.Should().NotBeNull();
+            properCast.Should().NotBe(default(CloneableStruct));
+        }
+
+        //Wow, good on you C#, a compile time warning.
+        //woulda been nice if you didnt allow for explicit and implicit cast overrides tho.
 //            [Test]
 //            public void when_asing_a_struct_to_an_interface_it_doesnt_implement()
 //            {
@@ -114,20 +119,18 @@ namespace VersionCommander.UnitTests
 //                var improperCast = cloneable as IVersionControlNode; //compile-time error. Intresting                
 //            }
 
-            [Test, Ignore("cant dynamic proxy structs since they cant be derrived... that makes my life a fair bit easier.")]
-            public void when_asing_a_generated_type()
-            {
-                var fromCastle = new ProxyGenerator().CreateClassProxy(typeof (CloneableStruct), new object[]{"Value!"}, new IInterceptor[0]);
-                var cast = fromCastle as IVersionControlNode;
-                cast.Should().NotBe(default(CloneableStruct));
-                cast.Should().BeNull();
-            }
-
-            //the default of any interface is null, because interfaces are ref types. They're so ref types, the act of casting something as its interface
-            //converts it to a ref type. Intresting.
-            //Can I do equals on the default of an interface that extends IEquatable?
+        [Test, Ignore("cant dynamic proxy structs since they cant be derrived... that makes my life a fair bit easier.")]
+        public void when_asing_a_generated_type()
+        {
+            var fromCastle = new ProxyGenerator().CreateClassProxy(typeof (CloneableStruct), new object[]{"Value!"}, new IInterceptor[0]);
+            var cast = fromCastle as IVersionControlNode;
+            cast.Should().NotBe(default(CloneableStruct));
+            cast.Should().BeNull();
         }
 
+        //the default of any interface is null, because interfaces are ref types. They're so ref types, the act of casting something as its interface
+        //converts it to a ref type. Intresting.
+        //Can I do equals on the default of an interface that extends IEquatable?
 
         [Test]
         public void messing_around_with_autoamppers_cloneing_functionality()
@@ -294,74 +297,9 @@ namespace VersionCommander.UnitTests
             //so overrides are intrinsically virtual, and any overriding member can itself be overriden nicely.
         }
 
-        public class RecordingVersionControlProvider : IVersionControlProvider, IEquatable<IVersionControlProvider>
-        {
-            private static int IdCounter { get; set; }
-            public int Id { get; private set; }
-
-            public RecordingVersionControlProvider()
-            {
-                Id = ++IdCounter;
-            }
-
-            public IVersionControlNode GetVersionControlNode()
-            {
-                throw new NotImplementedException();
-            }
-
-            public IVersionController<TSubject> GetVersionController<TSubject>()
-            {
-                throw new NotImplementedException();
-            }
-
-            public bool Equals(IVersionControlProvider other)
-            {
-                EqualsCallMe.WasCalled = true;
-
-                if (ReferenceEquals(null, other)) return false;
-                if (ReferenceEquals(this, other)) return true;
-
-                return true;
-            }
-
-            public override int GetHashCode()
-            {
-                return Id;
-            }
-
-            public static bool operator ==(RecordingVersionControlProvider left, RecordingVersionControlProvider right)
-            {
-                return Equals(left, right);
-            }
-
-            public static bool operator !=(RecordingVersionControlProvider left, RecordingVersionControlProvider right)
-            {
-                return !Equals(left, right);
-            }
-        }
-
         public static class EqualsCallMe
         {
             public static bool WasCalled { get; set; }
-        }
-
-        [Test]
-        public void when_testing_equality_on_a_type_statically_known_as_an_interface_but_backed_by_a_type_that_overloads_equals()
-        {
-            IVersionControlProvider nullProvider = new NullVersionControlProvider();
-
-            ReferenceEquals(nullProvider, null).Should().BeFalse();
-
-            nullProvider.Equals(null).Should().BeTrue();
-
-            nullProvider.Equals(new NullVersionControlProvider()).Should().BeTrue();
-            //how the bugger is this true? It must be hitting NullVersionControlProviders equals, but how?
-
-            nullProvider.Equals(new RecordingVersionControlProvider()).Should().BeFalse();
-            EqualsCallMe.WasCalled.Should().BeFalse();
-            //because its not hitting the recordingVersionControlProviders equals
-
-            //and once it hits that public new static extern bool Equals... thing from the RuntimeHelper theres no way its jumping back into this assembly.
         }
 
         public interface IEmptyInterface
@@ -412,7 +350,7 @@ namespace VersionCommander.UnitTests
         }
 
         [Test]
-        public void yet_more_testing_on_equals()
+        public void when_calling_through_a_class_that_implements_IEquatable()
         {
             IEmptyInterface staticallyInterface = new EmptyOverridingTypedEquality();
             staticallyInterface.Equals(new EmptyOverridingTypedEquality()).Should().BeFalse();
@@ -469,7 +407,7 @@ namespace VersionCommander.UnitTests
         }
 
         [Test]
-        public void unending_testing_of_equals()
+        public void when_calling_through_a_class_that_both_implements_iequatable_and_overrides_equals()
         {
             IEmptyInterface staticallyInterface = new EmptyOverridingEverythingItCan();
             var other = new EmptyOverridingEverythingItCan();
@@ -482,7 +420,6 @@ namespace VersionCommander.UnitTests
             staticallyImplementation.Equals(other).Should().BeTrue("because the equals call was intercepted via the IEquality<Interface> overload");
             EmptyOverridingTypedEquality.EqualsLog.Should().ContainSingle(item => item == string.Format(EmptyOverridingTypedEquality.
                                                                           CalledTypedEqualsOnThisTypeOtherTemplate, staticallyImplementation.Id, other.Id));
-
         }
 
         //ok, theres no cleverness to whats going on here:

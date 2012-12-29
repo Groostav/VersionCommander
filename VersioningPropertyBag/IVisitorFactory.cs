@@ -10,7 +10,7 @@ namespace VersionCommander.Implementation
             where TVisitor : IPropertyTreeVisitor, new();
 
         IPropertyTreeVisitor MakeRollbackVisitor(long targetVersion);
-        IPropertyTreeVisitor MakeDeltaApplicationVisitor(bool includeDescendents, bool isNowActive, MethodInfo targetSite);
+        IPropertyTreeVisitor MakeDeltaApplicationVisitor(bool includeDescendents, bool makeActive, MethodInfo targetSite);
     }
 
     public class VisitorFactory : IVisitorFactory
@@ -25,9 +25,9 @@ namespace VersionCommander.Implementation
             return new RollbackVisitor(targetVersion);
         }
 
-        public IPropertyTreeVisitor MakeDeltaApplicationVisitor(bool includeDescendents, bool isNowActive, MethodInfo targetSite)
+        public IPropertyTreeVisitor MakeDeltaApplicationVisitor(bool includeDescendents, bool makeActive, MethodInfo targetSite)
         {
-            return new DeltaApplicationVisitor(includeDescendents, isNowActive, targetSite);
+            return new DeltaApplicationVisitor(includeDescendents, makeActive, targetSite);
         }
     }
 }
