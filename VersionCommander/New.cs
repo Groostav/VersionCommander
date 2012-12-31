@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Castle.DynamicProxy;
 using VersionCommander.Implementation;
+using VersionCommander.Implementation.Cloners;
 using InternalNew = VersionCommander.Implementation.New;
 
 namespace VersionCommander

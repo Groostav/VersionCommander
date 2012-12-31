@@ -5,7 +5,6 @@ using NUnit.Framework;
 using VersionCommander.Implementation;
 using VersionCommander.Implementation.Exceptions;
 using VersionCommander.Implementation.Extensions;
-using VersionCommander.Implementation.Tests.TestingAssists;
 using VersionCommander.UnitTests.TestingAssists;
 
 namespace VersionCommander.IntegrationTests

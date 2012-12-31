@@ -7,7 +7,7 @@ using VersionCommander.Implementation.Extensions;
 
 namespace VersionCommander.Implementation
 {
-    [DebuggerDisplay("TimestampedPropertyVersionDelta: Set {TargetSite.Name} to {Arguments[0]}")]
+    [DebuggerDisplay("TimestampedPropertyVersionDelta: Set {TargetSite.Name} to {_arguments[0]}")]
     public class TimestampedPropertyVersionDelta : TimestampedVersionDelta, ICloneable<TimestampedPropertyVersionDelta>
     {
         public TimestampedPropertyVersionDelta(object setValue, MethodInfo targetSite, long timeStamp, bool isActive = true) 
@@ -30,7 +30,18 @@ namespace VersionCommander.Implementation
             //not sure this is a good dependency, but its convienient. Could refactor to "IsSetting<TSomething>()",
                 //but then I lose the routing through the VersionControlNode extension method.
                 //maybe the MS Explicit cast operator can help me here?
-            return TargetSite.IsPropertySetter() && Arguments.Single().VersionControlNode() != null;
+            if ( ! TargetSite.IsPropertySetter())
+            {
+                return false;
+            }
+            var setValue = Arguments.Single();
+            //"is" is probably a fair bit cheaper than hitting the interceptor, so lets try to fail it on a simple interface query:
+            if (! (setValue is IVersionablePropertyBag)) //TODO this breaks my DLL layout.
+            {
+                return false;
+            }
+            //full expensive call:
+            return setValue.VersionControlNode() != null;
         }
 
         public new TimestampedPropertyVersionDelta Clone()

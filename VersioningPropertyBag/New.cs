@@ -1,6 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using System.Threading;
 using Castle.DynamicProxy;
+using VersionCommander.Implementation.Cloners;
 
 namespace VersionCommander.Implementation
 {
@@ -9,6 +12,8 @@ namespace VersionCommander.Implementation
         static New()
         {
             Generator = new ProxyGenerator();
+            //Force AutoMapper into the GAC. this takes about 1.5s.
+            new Thread(() => Assembly.GetAssembly(typeof (AutoMapper.Mapper))).Start();
         }
 
         private static readonly ProxyGenerator Generator;

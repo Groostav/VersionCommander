@@ -6,6 +6,7 @@ using System.Reflection;
 using FakeItEasy;
 using FizzWare.NBuilder;
 using VersionCommander.Implementation;
+using VersionCommander.Implementation.Cloners;
 using VersionCommander.Implementation.Extensions;
 using VersionCommander.Implementation.Visitors;
 

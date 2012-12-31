@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using VersionCommander.Implementation.Cloners;
 using VersionCommander.Implementation.Exceptions;
 using VersionCommander.Implementation.Extensions;
 using VersionCommander.Implementation.Visitors;
@@ -88,8 +89,6 @@ namespace VersionCommander.Implementation
         public override object CurrentDepthCopy()
         {
             return _proxyFactory.CreateVersioning(_content, _cloneFactory, _mutations.Select(mutation => mutation.Clone()));
-            //BUG: this doesnt seem right, it should want the whole proxy, not just its controller, 
-            //because the controller cant link back to the proxy.
         }
 
         public TSubject GetCurrentVersion()
@@ -175,6 +174,7 @@ namespace VersionCommander.Implementation
                         "invoke {0}() on the child directly",
                         MethodInfoExtensions.GetMethodInfo(() => UndoLastAssignmentTo<TTarget>(null)).Name));
             }
+
             else if (unwoundMessageChain.Count < 1)
             {
                 throw new UntrackedObjectException(

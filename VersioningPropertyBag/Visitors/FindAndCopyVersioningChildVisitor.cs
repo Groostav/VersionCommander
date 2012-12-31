@@ -42,6 +42,8 @@ namespace VersionCommander.Implementation.Visitors
 
         private IEnumerable<KeyValuePair<int, TimestampedPropertyVersionDelta>> GetCadidatesByIndex(IVersionControlNode node)
         {
+            //So the profiler thinks this is a problem, but I cant figure out how it could be...
+                //im hitting castle's pre_nub or whatever it is, so somethings being intercepted but I cant figure out what.
             return from index in Enumerable.Range(0, node.Mutations.Count)
                    where node.Mutations[index].IsSettingVersioningObject()
                    select new KeyValuePair<int, TimestampedPropertyVersionDelta>(index, node.Mutations[index]);

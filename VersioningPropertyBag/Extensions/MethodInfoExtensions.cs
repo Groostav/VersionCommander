@@ -41,6 +41,13 @@ namespace VersionCommander.Implementation.Extensions
         }
 
         [Pure]
+        public static MethodInfo MethodInfoFor<TSubject, TResult>(this TSubject subject, 
+                                                                  Expression<Func<TSubject, TResult>> targetSite)
+        {
+            return GetMethodInfo(targetSite);
+        }
+        
+        [Pure]
         public static bool IsPropertySetter(this MethodInfo method)
         {
             Contract.Requires(method != null && method.DeclaringType != null && method.DeclaringType.GetProperties() != null);
@@ -64,7 +71,7 @@ namespace VersionCommander.Implementation.Extensions
         {
             if (method == null) throw new ArgumentNullException("method");
             var takesArg = method.GetParameters().Length == 1;
-            var hasReturn = method.ReturnType != typeof(void);
+            var hasReturn = method.ReturnType != typeof (void);
             if (!(takesArg || hasReturn)) return null;
 
             if (takesArg && !hasReturn)
@@ -83,6 +90,7 @@ namespace VersionCommander.Implementation.Extensions
         /// <typeparam name="T"></typeparam>
         /// <param name="expression">The expression.</param>
         /// <returns></returns>
+        [Pure]
         public static MethodInfo GetMethodInfo(Expression<Action> expression)
         {
             return GetMethodInfo((LambdaExpression)expression);
@@ -94,6 +102,7 @@ namespace VersionCommander.Implementation.Extensions
         /// <typeparam name="T"></typeparam>
         /// <param name="expression">The expression.</param>
         /// <returns></returns>
+        [Pure]
         public static MethodInfo GetMethodInfo<T>(Expression<Action<T>> expression)
         {
             return GetMethodInfo((LambdaExpression)expression);
@@ -102,10 +111,11 @@ namespace VersionCommander.Implementation.Extensions
         /// <summary>
         /// Given a lambda expression that calls a method, returns the method info.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="TSubject"></typeparam>
         /// <param name="expression">The expression.</param>
         /// <returns></returns>
-        public static MethodInfo GetMethodInfo<T, TResult>(Expression<Func<T, TResult>> expression)
+        [Pure]
+        public static MethodInfo GetMethodInfo<TSubject, TResult>(Expression<Func<TSubject, TResult>> expression)
         {
             return GetMethodInfo((LambdaExpression)expression);
         }
@@ -115,6 +125,7 @@ namespace VersionCommander.Implementation.Extensions
         /// </summary>
         /// <param name="expression">The expression.</param>
         /// <returns></returns>
+        /// 
         public static MethodInfo GetMethodInfo(LambdaExpression expression)
         {
             var outermostExpression = expression.Body as MethodCallExpression;

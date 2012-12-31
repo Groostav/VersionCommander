@@ -2,13 +2,18 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using AutoMapper;
-using VersionCommander.UnitTests.TestingAssists;
+using VersionCommander.Implementation;
 
-namespace VersionCommander.Implementation.Tests.TestingAssists
+namespace VersionCommander.UnitTests.TestingAssists
 {
     [DebuggerDisplay("DeepPropertyBag : StringProperty = {StringProperty}")]
     public class DeepPropertyBag : ICloneable, IEquatable<DeepPropertyBag>, IVersionablePropertyBag
     {
+        static DeepPropertyBag()
+        {
+            Mapper.CreateMap<DeepPropertyBag, DeepPropertyBag>();
+        }
+
         public virtual FlatPropertyBag SpecialChild { get; set; }
         public virtual IList<FlatPropertyBag> ChildBags { get; set; }
         public virtual string Stringey { get; set; }

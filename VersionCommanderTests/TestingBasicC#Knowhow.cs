@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using AutoMapper;
 using FakeItEasy;
 using FluentAssertions;
 using NUnit.Framework;
 using Castle.DynamicProxy;
 using VersionCommander.Implementation;
-using VersionCommander.Implementation.Tests.TestingAssists;
 using VersionCommander.UnitTests.TestingAssists;
 
 namespace VersionCommander.UnitTests
@@ -43,7 +43,7 @@ namespace VersionCommander.UnitTests
          [SetUp]
          public void Setup()
          {
-             EqualsCallMe.WasCalled = false;
+             EqualsCallMe.Maybe = false;
              EmptyOverridingTypedEquality.EqualsLog.Clear();
          }
         
@@ -149,6 +149,7 @@ namespace VersionCommander.UnitTests
             clonedViaAutomapper.Should().NotBeNull();
 
             //ahh, so automapper doesnt actually perform a deep copy for me. I should've known this.
+            clonedViaAutomapper.Should().NotBeSameAs(sample);
             clonedViaAutomapper.SpecialChild.Should().BeSameAs(sample.SpecialChild);
             clonedViaAutomapper.ChildBags.First().Should().BeSameAs(firstChild);
         }
@@ -168,7 +169,7 @@ namespace VersionCommander.UnitTests
         public void when_calling_equals_on_delegates()
         {
             var func = new Func<int>(() => 1);
-//            func.Should().Be(new Func<int>(() => 1));  //fails
+
             func.Should().NotBe(new Func<int>(() => 1)); //so this is intresting,
             //microsoft MVPs immediatly start talking about performance optimizations, and how the compiler will optimize those lambdas to avoid code explosion.
             //but even still, there is documentation for MulticastDelegate.Equals(), and this doesnt seem to adhere to that.
@@ -297,7 +298,7 @@ namespace VersionCommander.UnitTests
 
         public static class EqualsCallMe
         {
-            public static bool WasCalled { get; set; }
+            public static bool Maybe { get; set; }
         }
 
         public interface IEmptyInterface
@@ -365,7 +366,7 @@ namespace VersionCommander.UnitTests
         {
             public override int GetHashCode()
             {
-                EqualsLog.Add(string.Format("Whos this asshole whos calling GetHashCode on my object? They're at: \n" + new StackTrace()));
+                EqualsLog.Add(string.Format("Whos this asshole calling GetHashCode on my object? They're at: \n" + new StackTrace()));
                 return 0;
             }
 
@@ -434,5 +435,55 @@ namespace VersionCommander.UnitTests
 
         //anyways, resharpers generated equality stuff makes sense. I wish this was more newbie friendly.
             //also, intrestingly, a typed equality comparison doesn't require overloading GetHashCode().
+
+        [Test]
+        public void when_automapping_object_that_doesnt_have_paramless_ctor()
+        {
+            const string constructedString = "blagh";
+            var unactivateable = new CantActivatorMeSuckers(constructedString);
+            unactivateable.NotParamless = constructedString;
+
+            Mapper.CreateMap<CantActivatorMeSuckers, CantActivatorMeSuckers>();
+            var copy = Mapper.Map<CantActivatorMeSuckers>(unactivateable);
+
+            copy.Should().NotBeNull();
+            copy.NotParamless.Should().Be(constructedString);
+            copy.Should().NotBeSameAs(unactivateable);
+        }
+
+        public class CantActivatorMeSuckers 
+        {
+            public string NotParamless { get; set; }
+
+            public CantActivatorMeSuckers(string notParamless)
+            {
+                if(notParamless == null) throw new ArgumentNullException("notParamless");
+                NotParamless = notParamless;
+            }
+        }
+
+        //cheeky package, it reflects on the parameter by name:
+        [Test]
+        public void when_automapping_object_with_constructor_taking_wierdly_named_param()
+        {
+            var unactivatable = new EvenMoreDifficultToActivate("copy this");
+
+            Mapper.CreateMap<EvenMoreDifficultToActivate, EvenMoreDifficultToActivate>();
+            TestDelegate act = () => Mapper.Map<EvenMoreDifficultToActivate>(unactivatable);
+
+            Assert.Throws<AutoMapperMappingException>(act);
+        }
+
+        public class EvenMoreDifficultToActivate
+        {
+            public string StringProp { get; set; }
+
+            public EvenMoreDifficultToActivate(string notCalledStringProp)
+            {
+                StringProp = notCalledStringProp;
+            }
+        }
     }
+
+ 
 }

@@ -13,12 +13,11 @@ namespace VersionCommander.Implementation
         void RollbackTo(long targetVersion);
         object CurrentDepthCopy();
 
+        IList<TimestampedPropertyVersionDelta> Mutations { get; }
         IList<IVersionControlNode> Children { get; }
         IVersionControlNode Parent { get; set; }
 
         void Accept(IVersionControlTreeVisitor visitor);
-
-        IList<TimestampedPropertyVersionDelta> Mutations { get; }
 
         object Get(PropertyInfo targetProperty, long version);
         void Set(PropertyInfo targetProperty, object value, long version);
@@ -34,6 +33,7 @@ namespace VersionCommander.Implementation
         [Pure]
         object IVersionControlNode.CurrentDepthCopy()
         {
+            //ensures all value type properties are in new memory. 
             return default(IVersionControlNode);
         }
 
@@ -56,7 +56,6 @@ namespace VersionCommander.Implementation
             }
             set
             {
-                Contract.Requires(value != null);
             }
         }
 

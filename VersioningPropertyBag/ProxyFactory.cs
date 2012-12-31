@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using VersionCommander.Implementation.Cloners;
 
 namespace VersionCommander.Implementation
 {

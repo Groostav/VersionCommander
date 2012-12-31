@@ -86,7 +86,10 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Cloners\CloneHelper.cs" />
     <Compile Include="Constants.cs" />
+    <Compile Include="Cloners\DefaultCloneFactory.cs" />
+    <Compile Include="Cloners\DefaultCloneWithDirectedNew.cs" />
     <Compile Include="Exceptions\VersionClockResolutionException.cs" />
     <Compile Include="IProxyFactory.cs" />
     <Compile Include="NullObjects\NullVersionController.cs" />
@@ -110,7 +113,7 @@
     <Compile Include="Extensions\MethodInfoExtensions.cs" />
     <Compile Include="Extensions\MsCorLibExtensions.cs" />
     <Compile Include="New.cs" />
-    <Compile Include="PropertyBagCloner.cs" />
+    <Compile Include="Cloners\ICloneFactory.cs" />
     <Compile Include="Exceptions\UntrackedObjectException.cs" />
     <Compile Include="Visitors\RollbackVisitor.cs" />
     <Compile Include="ThereBeDragons.cs" />

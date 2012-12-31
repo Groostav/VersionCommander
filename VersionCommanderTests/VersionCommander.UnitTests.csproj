@@ -70,6 +70,7 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DeltaApplicationVisitorFixture.cs" />
     <Compile Include="MsCoreLibExtensionsFixture.cs" />
     <Compile Include="PropertyVersionControllerFixture.cs" />
     <Compile Include="MethodInfoExtensionsTesting.cs" />
