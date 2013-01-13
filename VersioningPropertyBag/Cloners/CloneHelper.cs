@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Reflection;
 using AutoMapper;
 using VersionCommander.Implementation.Extensions;
 
@@ -16,6 +17,10 @@ namespace VersionCommander.Implementation.Cloners
             {
                 return (TCloned)targetAsCloneable.Clone();
             }
+//            else if (target.GetType().HasCopyConstructor())
+//            {
+//                return target.GetType().GetCopyConstructor()
+//            }
             else
             {
                 return UseAutoMapper(target);

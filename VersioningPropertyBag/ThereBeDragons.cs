@@ -15,4 +15,22 @@ namespace VersionCommander.Implementation
             _problemDescription = problemDescription;
         }
     }
+
+    /// <summary>
+    /// Describes a class that has behavior that is so simply it isnt worth testing and/or is used by multiple 
+    /// test suites without being stubbed/mocked.
+    /// </summary>
+    public class Simpleton : Attribute
+    {
+        private readonly string _description;
+
+        public Simpleton()
+        {
+        }
+
+        public Simpleton(string description)
+        {
+            _description = description;
+        }
+    }
 }

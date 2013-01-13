@@ -15,13 +15,10 @@ namespace VersionCommander.Implementation
     public class PropertyBagVersionController<TSubject> : VersionControlNodeBase, IVersionController<TSubject> 
         where TSubject : class
     {
-        private readonly List<TimestampedPropertyVersionDelta> _mutations;
         private readonly TSubject _content;
         private readonly ICloneFactory<TSubject> _cloneFactory;
         private readonly IVisitorFactory _visitorFactory;
         private readonly IProxyFactory _proxyFactory;
-
-        public override IList<TimestampedPropertyVersionDelta> Mutations { get { return _mutations; } } 
 
         public PropertyBagVersionController(TSubject content,
                                             ICloneFactory<TSubject> cloneFactory,
@@ -29,8 +26,6 @@ namespace VersionCommander.Implementation
                                             IVisitorFactory visitorFactory,
                                             IProxyFactory proxyFactory)
         {            
-            _mutations = new List<TimestampedPropertyVersionDelta>();
-
             _content = content;
             _cloneFactory = cloneFactory;
             _visitorFactory = visitorFactory;
@@ -38,7 +33,7 @@ namespace VersionCommander.Implementation
 
             if (existingChanges != null)
             {
-                _mutations.AddRange(existingChanges);
+                Mutations.AddRange(existingChanges);
             }
         }
 
@@ -88,7 +83,7 @@ namespace VersionCommander.Implementation
 
         public override object CurrentDepthCopy()
         {
-            return _proxyFactory.CreateVersioning(_content, _cloneFactory, _mutations.Select(mutation => new TimestampedPropertyVersionDelta(mutation)));
+            return _proxyFactory.CreateVersioning(_content, _cloneFactory, Mutations.Select(mutation => new TimestampedPropertyVersionDelta(mutation)));
         }
 
         public TSubject GetCurrentVersion()
@@ -119,7 +114,7 @@ namespace VersionCommander.Implementation
 
         public override object Get(PropertyInfo targetProperty, long version = long.MaxValue)
         {
-            var lastReturned = _mutations.Where(mutation => mutation.TimeStamp < version && mutation.IsActive)
+            var lastReturned = Mutations.Where(mutation => mutation.TimeStamp < version && mutation.IsActive)
                                          .LastOrDefault(mutation => mutation.TargetSite == targetProperty.GetSetMethod());
 
             return lastReturned != null
@@ -130,8 +125,8 @@ namespace VersionCommander.Implementation
         public override void Set(PropertyInfo targetProperty, object value, long version)
         {
             var targetSite = targetProperty.GetSetMethod();
-            _mutations.RemoveAll(mutation => mutation.TargetSite == targetSite && ! mutation.IsActive);
-            _mutations.Add(new TimestampedPropertyVersionDelta(value, targetSite, version));
+            Mutations.RemoveAll(mutation => mutation.TargetSite == targetSite && ! mutation.IsActive);
+            Mutations.Add(new TimestampedPropertyVersionDelta(value, targetSite, version));
         }
 
         private void EnsureCanUndoChangeTo(PropertyInfo targetMember)
@@ -148,7 +143,7 @@ namespace VersionCommander.Implementation
         // ReSharper restore UnusedParameter.Local
         {
             var targetMethod = targetMember.GetSetMethod();
-            if ( ! _mutations.Any(mutation => mutation.TargetSite == targetMethod && mutation.IsActive != isRedo))
+            if ( ! Mutations.Any(mutation => mutation.TargetSite == targetMethod && mutation.IsActive != isRedo))
             {
                 throw new VersionDeltaNotFoundException(
                     string.Format("No change to {0} can be redone, as either no changes have been made yet, " +

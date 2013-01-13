@@ -7,6 +7,7 @@ using NUnit.Framework;
 using VersionCommander.Implementation;
 using VersionCommander.Implementation.Exceptions;
 using VersionCommander.Implementation.Extensions;
+using VersionCommander.Implementation.NullObjects;
 using VersionCommander.Implementation.Visitors;
 using VersionCommander.UnitTests.TestingAssists;
 
@@ -137,8 +138,8 @@ namespace VersionCommander.UnitTests
             controller.Accept(fakeVisitor);
 
             //assert
-            A.CallTo(() => fakeChildren.First().Accept(fakeVisitor)).MustHaveHappened();
-            A.CallTo(() => fakeChildren.Last().Accept(fakeVisitor)).MustHaveHappened();
+            A.CallTo(() => fakeChildren.First().RecursiveAccept(fakeVisitor)).MustHaveHappened();
+            A.CallTo(() => fakeChildren.Last().RecursiveAccept(fakeVisitor)).MustHaveHappened();
             A.CallTo(() => fakeVisitor.OnEntry(controller)).MustHaveHappened();
         }
 

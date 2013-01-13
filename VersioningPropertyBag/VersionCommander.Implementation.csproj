@@ -107,7 +107,6 @@
     <Compile Include="Extensions\EmptyGrouping.cs" />
     <Compile Include="Extensions\Grouping.cs" />
     <Compile Include="Visitors\FindAndCopyVersioningChildVisitor.cs" />
-    <Compile Include="Extensions\ICloneable.cs" />
     <Compile Include="Extensions\IImmutable.cs" />
     <Compile Include="Visitors\IVersionControlTreeVisitor.cs" />
     <Compile Include="IVersionablePropertyBag.cs" />

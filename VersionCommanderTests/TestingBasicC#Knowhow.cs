@@ -9,6 +9,7 @@ using FluentAssertions;
 using NUnit.Framework;
 using Castle.DynamicProxy;
 using VersionCommander.Implementation;
+using VersionCommander.Implementation.Extensions;
 using VersionCommander.UnitTests.TestingAssists;
 
 namespace VersionCommander.UnitTests
@@ -540,33 +541,116 @@ namespace VersionCommander.UnitTests
             "wat".GetType().IsPrimitive.Should().BeFalse();
         }
 
-        [Test]
-        public void why_does_shermer_hate_the_cloneable_interface()
+        /// <summary>
+        /// A typed Cloneable Interface.
+        /// </summary>
+        /// 
+        /// <remarks>
+        /// A note on implementation: For inheretence trees, the base class should make its implementation virtual, 
+        /// and each inheritor should override that virtual member, and implement its interface explicitally 
+        /// forwarding to the overriden virtual member.
+        /// <example>
+        /// <code>
+        /// public class BaseCloneable : ICloneable&lt;BaseCloneable&gt;
+        /// {
+        ///     ...
+        /// 
+        ///     public virtual TCloneDerrivative Clone&lt;TCloneDerrivative&gt;() where TCloneDerrivative : BaseCloneable
+        ///     {
+        ///         var clone = [your logic here]
+        ///         return clone as TCloneDerrivative;
+        ///     }
+        ///
+        ///     public object Clone()
+        ///     {
+        ///         return (this as ICloneable&lt;BaseCloneable&gt;).Clone&lt;BaseCloneable&gt;();
+        ///     }
+        /// }
+        ///
+        /// public class DerrivedCloneable : BaseCloneable, ICloneable&lt;DerrivedCloneable&gt; 
+        /// {
+        ///     ...
+        /// 
+        ///     TCloneDerrivative ICloneable&lt;DerrivedCloneable&gt;.Clone&lt;TCloneDerrivative&gt;()
+        ///     {
+        ///         var clone = [your logic, inclusive of new things from the derrived class, here]
+        ///         return clone as TCloneDerrivative;
+        ///     }
+        ///
+        ///     public override TCloneDerrivative Clone&lt;TCloneDerrivative&gt;()
+        ///     {
+        ///         return (this as ICloneable&lt;DerrivedCloneable&gt;).Clone&lt;DerrivedCloneable&gt;() as TCloneDerrivative;
+        ///     }
+        /// } 
+        /// </code>
+        /// </example>
+        /// </remarks>
+        /// <typeparam name="TClone">The type of the returned clone, typically the type of the hosting object:<code>this.GetType()</code></typeparam>
+        public interface ICloneable<in TClone> : ICloneable
         {
-            
+            TCloneDerrivative Clone<TCloneDerrivative>() where TCloneDerrivative : TClone;
         }
 
         public class BaseCloneable : ICloneable<BaseCloneable>
         {
-            public virtual BaseCloneable Clone()
+            public virtual TCloneDerrivative Clone<TCloneDerrivative>() where TCloneDerrivative : BaseCloneable
             {
-                throw new NotImplementedException();
+                return new BaseCloneable() as TCloneDerrivative;
+            }
+
+            public object Clone()
+            {
+                return (this as ICloneable<BaseCloneable>).Clone<BaseCloneable>();
             }
         }
 
-        public class DerrivedCloneable : BaseCloneable, ICloneable<DerrivedCloneable>, ICloneable<BaseCloneable>
+        public class DerrivedCloneable : BaseCloneable, ICloneable<DerrivedCloneable> 
         {
-            BaseCloneable ICloneable<BaseCloneable>.Clone()
+            TCloneDerrivative ICloneable<DerrivedCloneable>.Clone<TCloneDerrivative>()
             {
-                throw new NotImplementedException();
+                return new DerrivedCloneable() as TCloneDerrivative;
             }
 
-            //so this sucks. 
-            public new DerrivedCloneable Clone()
+            public override TCloneDerrivative Clone<TCloneDerrivative>()
             {
-                throw new NotImplementedException();
+                return (this as ICloneable<DerrivedCloneable>).Clone<DerrivedCloneable>() as TCloneDerrivative;
+            }
+        } 
+
+        public class FurtherDerrivedCloneable : DerrivedCloneable, ICloneable<FurtherDerrivedCloneable>
+        {
+            public override TCloneDerrivative Clone<TCloneDerrivative>()
+            {
+                return (this as ICloneable<FurtherDerrivedCloneable>).Clone<FurtherDerrivedCloneable>() as TCloneDerrivative;
+            }
+
+            TCloneDerrivative ICloneable<FurtherDerrivedCloneable>.Clone<TCloneDerrivative>()
+            {
+                return new FurtherDerrivedCloneable() as TCloneDerrivative;
             }
         }
+
+        [Test]
+        public void theres_no_way_this_cloneable_shinanigens_works()
+        {
+            var x = new FurtherDerrivedCloneable();
+
+            //this... this is better by a hair and requires more than a hairs effort on the other end to get right.
+            var y = x.Clone<FurtherDerrivedCloneable>();
+
+            x.Should().NotBeSameAs(y);
+        }
+
+        [Test]
+        public void theres_no_way_this_cloneable_shinanigens_works_with_the_untyped_clone()
+        {
+            var x = new FurtherDerrivedCloneable();
+
+            var y = x.Clone();
+
+            x.Should().NotBeSameAs(y);
+        }
+
     }
 
     //extension methods in non-nested classes only huh? I'd like to hear the rationale behind that.

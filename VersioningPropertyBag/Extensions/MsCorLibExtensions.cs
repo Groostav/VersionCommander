@@ -24,18 +24,31 @@ namespace VersionCommander.Implementation.Extensions
 
         public static void AddRange<TItem>(this ICollection<TItem> source, IEnumerable<TItem> itemsToAdd)
         {
-            if(source == null) throw new ArgumentNullException("source");
-            if(itemsToAdd == null) throw new ArgumentNullException("itemsToAdd");
+            if (source == null) throw new ArgumentNullException("source");
+            if (itemsToAdd == null) throw new ArgumentNullException("itemsToAdd");
 
             foreach (var item in itemsToAdd)
             {
                 source.Add(item);
             }
         }
+        
+        public static void RemoveAll<TItem>(this ICollection<TItem> source, Func<TItem, bool> predicate)
+        {
+            if (source == null) throw new ArgumentNullException("source");
+            if (predicate == null) throw new ArgumentNullException("predicate");
+
+            foreach (var item in source.ToArray().Where(predicate))
+            {
+                source.Remove(item);
+            }
+        }
+
 
         public static void ForEach<TElement>(this IEnumerable<TElement> source, Action<TElement> action)
         {
-            if(source == null) throw new ArgumentNullException("source");
+            if (source == null) throw new ArgumentNullException("source");
+            if (action == null) throw new ArgumentNullException("action");
 
             foreach (var element in source)
             {
@@ -43,17 +56,22 @@ namespace VersionCommander.Implementation.Extensions
             }
         }
 
-        public static bool IsSingle<TElement>(this IEnumerable<TElement> source)
-        {
-            return source.Count() == 1;
-        }
-
         public static void ForEach<TElement>(this IEnumerable<TElement> source, Action action)
         {
+            if (source == null) throw new ArgumentNullException("source");
+            if (action == null) throw new ArgumentNullException("action");
+
             foreach (var element in source)
             {
                 action.Invoke();
             }
+        }
+
+        public static bool IsSingle<TElement>(this IEnumerable<TElement> source)
+        {
+            if(source == null) throw new ArgumentNullException("source");
+
+            return source.Count() == 1;
         }
 
 
@@ -76,7 +94,9 @@ namespace VersionCommander.Implementation.Extensions
                                                                                Func<int, bool> isBetter)
             where TKey : IComparable<TKey>
         {
-            if (source == null) throw new ArgumentNullException();
+            if (source == null) throw new ArgumentNullException("source");
+            if (keySelector == null) throw new ArgumentNullException("keySelector");
+            if (isBetter == null) throw new ArgumentNullException("isBetter");
             // ReSharper disable PossibleMultipleEnumeration -- Any(), First(), and Skip(1) arnt worth ToArray, since all of them are O(1). 
             if (!source.Any()) return new EmptyGrouping<TKey, TElement>();
 
@@ -105,13 +125,33 @@ namespace VersionCommander.Implementation.Extensions
                                                        Func<TElement, TKey> keySelector)
             where TKey : IComparable<TKey>
         {
+            if (source == null) throw new ArgumentNullException("source");
+            if (keySelector == null) throw new ArgumentNullException("keySelector");
+
             var sourceCopy = source.ToArray();
 
-            var result = Enumerable.Range(0, sourceCopy.Length - 1)
-                                   .Aggregate(seed:true, func:(current, index) => current & 
-                                              keySelector(sourceCopy[index]).CompareTo(keySelector(sourceCopy[index + 1])) <= 0);
-
-            return result;
+            for(var i = 0; i < sourceCopy.Length - 1; i++)
+            {
+                if (keySelector(sourceCopy[i]).CompareTo(keySelector(sourceCopy[i + 1])) > 0)
+                {
+                    return false;
+                }
+            }
+            return true;
         }
+
+        public static IEnumerable<TElement> SubsetOnRange<TElement>(this IList<TElement> source, 
+                                                                    int startIndex,
+                                                                    int lastIndex)
+        {
+            if (source == null) throw new ArgumentNullException("source");
+            if (startIndex < 0 || lastIndex >= source.Count) throw new IndexOutOfRangeException();
+
+            var currentIndex = startIndex;
+            for (var it = source.GetEnumerator(); it.MoveNext() && currentIndex < lastIndex; currentIndex++)
+            {
+                yield return source[currentIndex];
+            }
+        } 
     }
 }

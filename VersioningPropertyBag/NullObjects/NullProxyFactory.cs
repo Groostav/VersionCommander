@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using VersionCommander.Implementation.Cloners;
 
-namespace VersionCommander.Implementation
+namespace VersionCommander.Implementation.NullObjects
 {
     public class NullProxyFactory : IProxyFactory
     {

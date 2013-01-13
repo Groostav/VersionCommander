@@ -7,6 +7,7 @@ using VersionCommander.Implementation.Extensions;
 
 namespace VersionCommander.Implementation
 {
+    [Simpleton]
     [DebuggerDisplay("TimestampedPropertyVersionDelta: Set {TargetSite.Name} to {_arguments[0]}")]
     public class TimestampedPropertyVersionDelta : TimestampedVersionDelta 
     {
@@ -18,7 +19,12 @@ namespace VersionCommander.Implementation
 
             var actualType = targetSite.GetParameters().Single().ParameterType;
 
-            if(setValue != null && ! setValue.GetType().IsAssignableTo(actualType)) 
+            if (setValue == null && actualType.IsValueType && actualType != typeof(Nullable<>)) //nullable being a struct is annoying.
+                throw new Exception(String.Format("Attempting to set null to a value type"));
+                //actually looking at the comments from microsoft symbole servers on nullable, Microsoft seems to think the whole concept
+                //of nullable is pretty annoying. Wierd serialization issues. 
+
+            if (setValue != null && ! setValue.GetType().IsAssignableTo(actualType)) 
                 throw new Exception(String.Format("supplied value to set is not the correct type. Supplied value is a {0} but the setter is setting a {1}", 
                                                   setValue.GetType(), actualType));
         }
@@ -49,6 +55,7 @@ namespace VersionCommander.Implementation
         }
     }
 
+    [Simpleton]
     [DebuggerDisplay("TimestampedVersionDelta: Invoke {TargetSite.Name} with {Arguments}")]
     public class TimestampedVersionDelta
     {

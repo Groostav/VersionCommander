@@ -21,7 +21,6 @@ namespace VersionCommander.UnitTests.TestingAssists
             _cloneFactoryByClonedType = new Dictionary<Type, object>();
         }
 
-        //TODO this should be returning a fake
         private readonly Dictionary<Type, object> _cloneFactoryByClonedType;
         public ICloneFactory<TClone> ProvidedCloneFactoryFor<TClone>()
         {
@@ -148,13 +147,18 @@ namespace VersionCommander.UnitTests.TestingAssists
             return new TimestampedPropertyVersionDelta(setValue, targetSite.GetSetMethod(), -1L, isActive:true);
         }
 
-        public IVersionControlNode MakeConfiguredVersionControlNodeWithChildren()
+        public IVersionControlNode MakeVersionControlNodeWithChildren()
         {
             var node = A.Fake<VersionControlNodeBase>();
             var children = new[] {A.Fake<IVersionControlNode>(), A.Fake<IVersionControlNode>()};
             node.Children.AddRange(children);
 
             return node;
+        }
+
+        public IVersionControlNode MakeVersionControlNode()
+        {
+            return A.Fake<VersionControlNodeBase>();
         }
     }
 }

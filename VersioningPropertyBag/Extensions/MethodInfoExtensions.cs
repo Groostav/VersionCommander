@@ -70,6 +70,8 @@ namespace VersionCommander.Implementation.Extensions
         public static PropertyInfo GetParentProperty(this MethodInfo method)
         {
             if (method == null) throw new ArgumentNullException("method");
+            if (method.DeclaringType == null) throw new TypeAccessException("cannot determine methods declaring type");
+
             var takesArg = method.GetParameters().Length == 1;
             var hasReturn = method.ReturnType != typeof (void);
             if (!(takesArg || hasReturn)) return null;
@@ -149,6 +151,7 @@ namespace VersionCommander.Implementation.Extensions
 
         private static PropertyInfo GetPropertyInfo(LambdaExpression propertyLinq)
         {
+            //in the case of an indexer, we hit this method.
             var call = propertyLinq.Body as MethodCallExpression;
             if (call != null)
             {
@@ -171,7 +174,7 @@ namespace VersionCommander.Implementation.Extensions
             var property = member.Member as PropertyInfo;
             if (property == null)
             {
-                throw new ArgumentException(string.Format("Expression is not a property-member expression (it is a {0} expression). " +
+                throw new ArgumentException(string.Format("Expression is not a property-member expression (it is a member-{0} expression). " +
                                                           "Expression should consist of a Property-getter call only.",
                                                           member.NodeType));
             }

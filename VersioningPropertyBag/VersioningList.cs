@@ -76,7 +76,7 @@ namespace VersionCommander.Implementation
             var wasRemoved = _backingList.Remove(item);
             if (wasRemoved)
             {
-                TryAddToChildren(item);
+                TryRemoveFromChildren(item);
                 _versionDeltas.Add(new TimestampedPropertyVersionDelta(item, RemoveMethod, Stopwatch.GetTimestamp()));
             }
             return wasRemoved;
@@ -123,11 +123,6 @@ namespace VersionCommander.Implementation
 
         #region IVersionControlNode
 
-        public override IList<TimestampedPropertyVersionDelta> Mutations 
-        { 
-            get { return _versionDeltas; } 
-        }
-
         public override void RollbackTo(long targetVersion)
         {
             throw new NotImplementedException();
@@ -155,6 +150,7 @@ namespace VersionCommander.Implementation
             if (controller != null)
             {
                 Children.Add(controller);
+                controller.Parent = this;
             }
         }
         private void TryRemoveFromChildren(TElement item)
@@ -162,7 +158,12 @@ namespace VersionCommander.Implementation
             var controller = item.VersionControlNode();
             if (controller != null)
             {
-                Children.Remove(controller);
+                var wasRemoved = Children.Remove(controller);
+                if (wasRemoved)
+                {
+                    Debug.Assert(controller.Parent == this);
+                    controller.Parent = null;
+                }
             }
         }
     }
