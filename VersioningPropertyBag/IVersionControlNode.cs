@@ -65,6 +65,11 @@ namespace VersionCommander.Implementation
             //Contract.Ensures(visitor is run on all children).
         }
 
+        public void LevelAccept(IVersionControlTreeVisitor visitor)
+        {
+            Contract.Requires(visitor != null);
+        }
+
         [Pure]
         IList<TimestampedPropertyVersionDelta> IVersionControlNode.Mutations
         {

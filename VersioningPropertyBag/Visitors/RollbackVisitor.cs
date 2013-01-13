@@ -2,7 +2,7 @@
 
 namespace VersionCommander.Implementation.Visitors
 {
-    public class RollbackVisitor : IVersionControlTreeVisitor
+    public class RollbackVisitor : VersionControlTreeVisitorBase
     {
         private readonly long _targetTime;
 
@@ -11,7 +11,7 @@ namespace VersionCommander.Implementation.Visitors
             _targetTime = targetTime;
         }
 
-        public void RunOn(IVersionControlNode controlNode)
+        public override void OnEntry(IVersionControlNode controlNode)
         {
             var relatedMutations = controlNode.Mutations.Where(mutation => mutation.TimeStamp > _targetTime).ToArray();
             foreach (var mutation in relatedMutations)

@@ -4,7 +4,7 @@ using FluentAssertions;
 using NUnit.Framework;
 using VersionCommander.Implementation.Extensions;
 
-namespace UnitTests
+namespace VersionCommander.UnitTests
 {
     [TestFixture]
     public class MsCoreLibExtensionsFixture

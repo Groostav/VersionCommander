@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -483,7 +484,101 @@ namespace VersionCommander.UnitTests
                 StringProp = notCalledStringProp;
             }
         }
+
+        [Test]
+        public void can_extension_methods_help_covariance_and_contravariance()
+        {
+            //well it doesnt with the quintessential List.Add(Car) vs List.Add(IVehicle) problem. (read: A list of cars is a list of vehicles right? 
+                //--> Wrong! 
+                    //var truckList = new List<Truck>; 
+                    //var castList = (List<Vehicle>)truckList; 
+                    //castList.Add(new Car()); blamo.
+
+            //but im not convinced that paramter useage is the only thing determining if a type is covariant or contravariant.
+            //infact a simple counter example is a templated type that has a TItem in its signature but is entirely unused
+                //--> the C# compiler wont let TItem be declared as "out" (Covariant), because its used as a param in a signature but the type is still covariant.
+                //because, well if the param of TItem is never used, how could the functionality be broken by letting it exist?
+                    //er, well it being covariant allows me to cast up...
+                        IEnumerable<IProxyFactory> derrivedEnumerable = null;
+                        IEnumerable<Object> baseEnumerable = derrivedEnumerable;
+                    //yeah, so that means that the extension method signature could only see a less-derrived TElement compared to the backing IAmCovariant<TElement> Implementation
+                    //meaning my extension method could be called on what is actually a AmCovariantImpl<string>, via its interfaced IAmCovariant<object>, with TElement = object. 
+                        var covar = new AmCovariantImpl<string>();
+                        IAmCovariant<object> cast = covar;
+                        cast.ExtensionMethod(new object());
+                    //so to the extension method the resulting TElement is totally nonsensical, but thats OK, what can we do thats useful? 
+                        //plenty of reflection things, 
+
+            //hmm
+        }
+
+        public interface IAmCovariant<out TElement> : IEnumerable<TElement>
+        {
+            TElement SomeMethod();
+            //cant have extension method in the interface since it would blow-up this interfaces covariant nature
+//            void ExtensionMethod(TElement element);
+        }
+        public class AmCovariantImpl<TElement> : IAmCovariant<TElement>
+        {
+            public TElement SomeMethod()
+            {
+                throw new NotImplementedException();
+            }
+            public IEnumerator<TElement> GetEnumerator()
+            {
+                throw new NotImplementedException();
+            }
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return GetEnumerator();
+            }
+        }
+
+        [Test]
+        public void a_string_is_not_primative()
+        {
+            "wat".GetType().IsPrimitive.Should().BeFalse();
+        }
+
+        [Test]
+        public void why_does_shermer_hate_the_cloneable_interface()
+        {
+            
+        }
+
+        public class BaseCloneable : ICloneable<BaseCloneable>
+        {
+            public virtual BaseCloneable Clone()
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        public class DerrivedCloneable : BaseCloneable, ICloneable<DerrivedCloneable>, ICloneable<BaseCloneable>
+        {
+            BaseCloneable ICloneable<BaseCloneable>.Clone()
+            {
+                throw new NotImplementedException();
+            }
+
+            //so this sucks. 
+            public new DerrivedCloneable Clone()
+            {
+                throw new NotImplementedException();
+            }
+        }
     }
 
- 
+    //extension methods in non-nested classes only huh? I'd like to hear the rationale behind that.
+    public static class CovariantClassExtensions
+    {
+        public static void ExtensionMethod<TElement>(this TestingBasicCSharpKnowhow.IAmCovariant<TElement> thisClass,
+                                                     TElement parameterOfTypeTElement)
+        {
+            //yeah, so sure enough I've dodged the covariance problem a little bit, but this method cant interface which means I cant give it to another assembly.
+
+            //I think it might have something to do with the [Pure] Attribute (further suggests this needs to be a basic language construct!!!), 
+                //or at least thats whats evidenced by List.Add counterexample. 
+        }
+    }
 }

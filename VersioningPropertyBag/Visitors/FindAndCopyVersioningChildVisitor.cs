@@ -5,9 +5,9 @@ using VersionCommander.Implementation.Extensions;
 
 namespace VersionCommander.Implementation.Visitors
 {
-    public class FindAndCopyVersioningChildVisitor : IVersionControlTreeVisitor
+    public class FindAndCopyVersioningChildVisitor : VersionControlTreeVisitorBase
     {
-        public void RunOn(IVersionControlNode controlNode)
+        public override void OnEntry(IVersionControlNode controlNode)
         {
             Debug.Assert(controlNode.Mutations.IsOrderedBy(mutation => mutation.TimeStamp));
 

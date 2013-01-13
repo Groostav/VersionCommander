@@ -8,11 +8,19 @@ using VersionCommander.Implementation.Extensions;
 namespace VersionCommander.Implementation
 {
     [DebuggerDisplay("TimestampedPropertyVersionDelta: Set {TargetSite.Name} to {_arguments[0]}")]
-    public class TimestampedPropertyVersionDelta : TimestampedVersionDelta, ICloneable<TimestampedPropertyVersionDelta>
+    public class TimestampedPropertyVersionDelta : TimestampedVersionDelta 
     {
         public TimestampedPropertyVersionDelta(object setValue, MethodInfo targetSite, long timeStamp, bool isActive = true) 
             : base(new[]{setValue}, targetSite, timeStamp, isActive)
         {
+            if( ! targetSite.IsPropertySetter()) 
+                throw new Exception(string.Format("method {0} is not a property setter.", targetSite));
+
+            var actualType = targetSite.GetParameters().Single().ParameterType;
+
+            if(setValue != null && ! setValue.GetType().IsAssignableTo(actualType)) 
+                throw new Exception(String.Format("supplied value to set is not the correct type. Supplied value is a {0} but the setter is setting a {1}", 
+                                                  setValue.GetType(), actualType));
         }
 
         public TimestampedPropertyVersionDelta(TimestampedPropertyVersionDelta delta, object newSetValue)
@@ -35,26 +43,14 @@ namespace VersionCommander.Implementation
                 return false;
             }
             var setValue = Arguments.Single();
-            //"is" is probably a fair bit cheaper than hitting the interceptor, so lets try to fail it on a simple interface query:
-            if (! (setValue is IVersionablePropertyBag)) //TODO this breaks my DLL layout.
-            {
-                return false;
-            }
+
             //full expensive call:
             return setValue.VersionControlNode() != null;
-        }
-
-        public new TimestampedPropertyVersionDelta Clone()
-        {
-            //so this might be one of the reasons Shermer doesn't like clone: it doesnt inherit nicely.
-                //were ok for this simple use case, but in the case where behavior is truely extended, we're boned. 
-                //what I'd really like is a where this : TThis, and then the clone signature could be public TThis Clone();
-            return new TimestampedPropertyVersionDelta(this);
         }
     }
 
     [DebuggerDisplay("TimestampedVersionDelta: Invoke {TargetSite.Name} with {Arguments}")]
-    public class TimestampedVersionDelta : ICloneable<TimestampedVersionDelta>
+    public class TimestampedVersionDelta
     {
         private readonly List<object> _arguments;
 

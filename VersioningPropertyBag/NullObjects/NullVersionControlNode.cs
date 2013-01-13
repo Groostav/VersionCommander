@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Reflection;
 using VersionCommander.Implementation.Visitors;
 
@@ -21,6 +20,11 @@ namespace VersionCommander.Implementation.NullObjects
         public IList<IVersionControlNode> Children { get; set; }
         public IVersionControlNode Parent { get; set; }
         public void Accept(IVersionControlTreeVisitor visitor)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void LevelAccept(IVersionControlTreeVisitor visitor)
         {
             throw new NotImplementedException();
         }

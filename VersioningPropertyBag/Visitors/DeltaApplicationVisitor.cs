@@ -6,16 +6,16 @@ using VersionCommander.Implementation.Extensions;
 
 namespace VersionCommander.Implementation.Visitors
 {
-    public class DeltaApplicationVisitor : IVersionControlTreeVisitor
+    public class DeltaApplicationVisitor : DescendentAggregatorVisitor
     {
-        private readonly bool _includeDescendents;
+        private readonly bool _visitAllNodes;
         private readonly bool _newStatus;
         private readonly Func<TimestampedPropertyVersionDelta, bool> _targetSiteContstraint;
 
-        public DeltaApplicationVisitor(bool includeDescendents, bool setActive, MethodInfo targetSite = null)
+        public DeltaApplicationVisitor(bool searchWholeTree, ChangeType changeType, MethodInfo targetSite)
         {
-            _includeDescendents = includeDescendents;
-            _newStatus = setActive;
+            _visitAllNodes = searchWholeTree;
+            _newStatus = changeType == ChangeType.Redo;
 
             if (targetSite == null)
             {
@@ -27,19 +27,22 @@ namespace VersionCommander.Implementation.Visitors
             }
         }
 
-        public void RunOn(IVersionControlNode controlNode)
-        {
-            var targetMutationSet = _includeDescendents
-                                        ? DescendentAggregatorVisitor.GetDescendentMutationsOf(controlNode)
-                                        : controlNode.Mutations;
+        public override void OnExit(IVersionControlNode controlNode)
+        {         
+            var targetMutation = controlNode.Mutations.Where(mutation => mutation.IsActive != _newStatus)
+                                                      .Where(_targetSiteContstraint)
+                                                      .WithMax(mutation => mutation.TimeStamp);
 
-            var targetMutation = targetMutationSet.Where(mutation => mutation.IsActive != _newStatus)
-                                                  .Where(_targetSiteContstraint)
-                                                  .WithMax(mutation => mutation.TimeStamp);
-
-            if (!targetMutation.IsSingle()) throw new VersionClockResolutionException();
+            
+            if ( ! targetMutation.Any()) throw new VersionDeltaNotFoundException();
+            if ( ! targetMutation.IsSingle()) throw new VersionClockResolutionException();
 
             targetMutation.Single().IsActive = _newStatus;
+        }
+
+        public override bool VisitAllNodes
+        {
+            get { return _visitAllNodes; }
         }
     }
 }

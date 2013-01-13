@@ -71,6 +71,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DeltaApplicationVisitorFixture.cs" />
+    <Compile Include="DescendentAggregatorVisitorFixture.cs" />
     <Compile Include="MsCoreLibExtensionsFixture.cs" />
     <Compile Include="PropertyVersionControllerFixture.cs" />
     <Compile Include="MethodInfoExtensionsTesting.cs" />

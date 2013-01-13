@@ -16,37 +16,47 @@ namespace VersionCommander.UnitTests.TestingAssists
     {
         public const string NonNullDefaultString = "Non Null Default";
 
-        public IEnumerable<TimestampedPropertyVersionDelta> EmptyChangeSet()
+        public TestHelper()
         {
-            return Enumerable.Empty<TimestampedPropertyVersionDelta>();
+            _cloneFactoryByClonedType = new Dictionary<Type, object>();
         }
 
         //TODO this should be returning a fake
-        public static ICloneFactory<TCloneable> DefaultCloneFactoryFor<TCloneable>()
-            where TCloneable : new()
+        private readonly Dictionary<Type, object> _cloneFactoryByClonedType;
+        public ICloneFactory<TClone> ProvidedCloneFactoryFor<TClone>()
         {
-            return new DefaultCloneFactory<TCloneable>();
+            object createdFactory;
+            return _cloneFactoryByClonedType.TryGetValue(typeof (TClone), out createdFactory)
+                       ? (ICloneFactory<TClone>) createdFactory
+                       : null;
+        } 
+        public ICloneFactory<TClone> MakeConfiguredCloneFactoryFor<TClone>()
+            where TClone : new()
+        {
+            var factory = A.Fake<ICloneFactory<TClone>>();
+            _cloneFactoryByClonedType.Add(typeof(TClone), factory);
+            return factory;
         }
 
-        public IVersionControlTreeVisitor ProvidedRollbackVisitor { get; private set; }
-        public IVersionControlTreeVisitor ProvidedFindAndCopyVersioningChildVisitor { get; private set; }
-        public IVersionControlTreeVisitor ProvidedDeltaApplicationVisitor { get; private set; }
-        public IVersionControlTreeVisitor ProvidedDescendentAggregatorVisitor { get; private set; }
+        public IVersionControlTreeVisitor ProvidedRollbackVisitor { get; set; }
+        public IVersionControlTreeVisitor ProvidedFindAndCopyVersioningChildVisitor { get; set; }
+        public IVersionControlTreeVisitor ProvidedDeltaApplicationVisitor { get; set; }
+        public IVersionControlTreeVisitor ProvidedDescendentAggregatorVisitor { get; set; }
 
         public IVisitorFactory ProvidedVisitorFactory { get; private set; }
-        public IVisitorFactory MakeConfiguredFakeVisitorFactory()
+        public IVisitorFactory MakeConfiguredVisitorFactory()
         {
             ProvidedVisitorFactory = A.Fake<IVisitorFactory>();
 
-            ProvidedRollbackVisitor = A.Fake<IVersionControlTreeVisitor>();
-            ProvidedDeltaApplicationVisitor = A.Fake<IVersionControlTreeVisitor>();
-            ProvidedFindAndCopyVersioningChildVisitor = A.Fake<IVersionControlTreeVisitor>();
-            ProvidedDescendentAggregatorVisitor = A.Fake<IVersionControlTreeVisitor>();
+            ProvidedRollbackVisitor = ProvidedRollbackVisitor ?? A.Fake<IVersionControlTreeVisitor>();
+            ProvidedDeltaApplicationVisitor = ProvidedDeltaApplicationVisitor ?? A.Fake<IVersionControlTreeVisitor>();
+            ProvidedFindAndCopyVersioningChildVisitor = ProvidedFindAndCopyVersioningChildVisitor ?? A.Fake<IVersionControlTreeVisitor>();
+            ProvidedDescendentAggregatorVisitor = ProvidedDescendentAggregatorVisitor ?? A.Fake<IVersionControlTreeVisitor>();
 
             A.CallTo(() => ProvidedVisitorFactory.MakeVisitor<FindAndCopyVersioningChildVisitor>()).Returns(ProvidedFindAndCopyVersioningChildVisitor);
             A.CallTo(() => ProvidedVisitorFactory.MakeVisitor<DescendentAggregatorVisitor>()).Returns(ProvidedDescendentAggregatorVisitor);
             A.CallTo(() => ProvidedVisitorFactory.MakeRollbackVisitor(0)).WithAnyArguments().Returns(ProvidedRollbackVisitor);
-            A.CallTo(() => ProvidedVisitorFactory.MakeDeltaApplicationVisitor(false, false, null)).WithAnyArguments().Returns(ProvidedDeltaApplicationVisitor);
+            A.CallTo(() => ProvidedVisitorFactory.MakeDeltaApplicationVisitor(ChangeType.Undo, false, null)).WithAnyArguments().Returns(ProvidedDeltaApplicationVisitor);
 
             return ProvidedVisitorFactory;
         }
@@ -72,6 +82,10 @@ namespace VersionCommander.UnitTests.TestingAssists
             return ProvidedProxyFactory;
         }
 
+        public IEnumerable<TimestampedPropertyVersionDelta> EmptyChangeSet()
+        {
+            return Enumerable.Empty<TimestampedPropertyVersionDelta>();
+        }
 
         public static IEnumerable<TimestampedPropertyVersionDelta> ChangeSet(object value,
                                                                              MethodInfo method,
@@ -108,7 +122,7 @@ namespace VersionCommander.UnitTests.TestingAssists
         }
 
         public static IVersionControlNode CreateAndAddVersioningChildTo(
-            PropertyVersionController<FlatPropertyBag> controller)
+            PropertyBagVersionController<FlatPropertyBag> controller)
         {
             var child = A.Fake<IVersionControlNode>();
             controller.Children.Add(child);
@@ -132,6 +146,15 @@ namespace VersionCommander.UnitTests.TestingAssists
             var setValue = targetSite.GetGetMethod().ReturnType.GetDefaultValue();
 
             return new TimestampedPropertyVersionDelta(setValue, targetSite.GetSetMethod(), -1L, isActive:true);
+        }
+
+        public IVersionControlNode MakeConfiguredVersionControlNodeWithChildren()
+        {
+            var node = A.Fake<VersionControlNodeBase>();
+            var children = new[] {A.Fake<IVersionControlNode>(), A.Fake<IVersionControlNode>()};
+            node.Children.AddRange(children);
+
+            return node;
         }
     }
 }

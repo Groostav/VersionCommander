@@ -10,24 +10,6 @@ namespace VersionCommander.Implementation
             where TVisitor : IVersionControlTreeVisitor, new();
 
         IVersionControlTreeVisitor MakeRollbackVisitor(long targetVersion);
-        IVersionControlTreeVisitor MakeDeltaApplicationVisitor(bool includeDescendents, bool makeActive, MethodInfo targetSite);
-    }
-
-    public class VisitorFactory : IVisitorFactory
-    {
-        public IVersionControlTreeVisitor MakeVisitor<TVisitor>() where TVisitor : IVersionControlTreeVisitor, new()
-        {
-            return new TVisitor();
-        }
-
-        public IVersionControlTreeVisitor MakeRollbackVisitor(long targetVersion)
-        {
-            return new RollbackVisitor(targetVersion);
-        }
-
-        public IVersionControlTreeVisitor MakeDeltaApplicationVisitor(bool includeDescendents, bool makeActive, MethodInfo targetSite)
-        {
-            return new DeltaApplicationVisitor(includeDescendents, makeActive, targetSite);
-        }
+        IVersionControlTreeVisitor MakeDeltaApplicationVisitor(ChangeType changeType, bool includeDescendents, MethodInfo targetSite = null);
     }
 }

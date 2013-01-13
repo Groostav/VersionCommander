@@ -3,8 +3,10 @@ using System.Linq;
 
 namespace VersionCommander.Implementation.Visitors
 {
-    public class DescendentAggregatorVisitor : IVersionControlTreeVisitor
+    public class DescendentAggregatorVisitor : VersionControlTreeVisitorBase
     {
+
+        [ThereBeDragons("This Code's complexity warrents propery DI, but yet its still static.")]
         public static IEnumerable<IVersionControlNode> GetDescendentsOf(IVersionControlNode targetNode)
         {
             var visitor = new DescendentAggregatorVisitor();
@@ -29,7 +31,7 @@ namespace VersionCommander.Implementation.Visitors
             get { return _descendents; }
         }
 
-        public void RunOn(IVersionControlNode controlNode)
+        public override void OnEntry(IVersionControlNode controlNode)
         {
             _descendents.AddRange(controlNode.Children);
         }

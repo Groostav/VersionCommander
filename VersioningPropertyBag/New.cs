@@ -39,7 +39,7 @@ namespace VersionCommander.Implementation
                                                              IEnumerable<TimestampedPropertyVersionDelta> existingModifications = null)
             where TSubject : class
         {
-            var controller = new PropertyVersionController<TSubject>(baseObject, 
+            var controller = new PropertyBagVersionController<TSubject>(baseObject, 
                                                                      cloneFactory, 
                                                                      existingModifications,
                                                                      new VisitorFactory(),

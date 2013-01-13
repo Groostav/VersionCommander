@@ -6,7 +6,8 @@ namespace VersionCommander.UnitTests.TestingAssists
     {
         private static int nextId;
         public int Id { get; private set; }
-        public FakeFlatPropertyBag()
+
+        protected FakeFlatPropertyBag()
         {
             Id = nextId++;
         }

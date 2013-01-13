@@ -57,6 +57,7 @@
     <CodeContractsRuntimeCheckingLevel>Full</CodeContractsRuntimeCheckingLevel>
     <CodeContractsReferenceAssembly>Build</CodeContractsReferenceAssembly>
     <CodeContractsAnalysisWarningLevel>2</CodeContractsAnalysisWarningLevel>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -86,6 +87,7 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ChangeType.cs" />
     <Compile Include="Cloners\CloneHelper.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Cloners\DefaultCloneFactory.cs" />
@@ -99,6 +101,7 @@
     <Compile Include="IVisitorFactory.cs" />
     <Compile Include="NullObjects\NullProxyFactory.cs" />
     <Compile Include="ProxyFactory.cs" />
+    <Compile Include="VisitorFactory.cs" />
     <Compile Include="Visitors\DeltaApplicationVisitor.cs" />
     <Compile Include="Visitors\DescendentAggregatorVisitor.cs" />
     <Compile Include="Extensions\EmptyGrouping.cs" />
@@ -126,7 +129,7 @@
     <Compile Include="Extensions\VersionablePropertyBagExtensions.cs" />
     <Compile Include="VersionControlNodeBase.cs" />
     <Compile Include="VersioningList.cs" />
-    <Compile Include="PropertyVersionController.cs" />
+    <Compile Include="PropertyBagVersionController.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

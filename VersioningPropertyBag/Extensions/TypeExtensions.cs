@@ -12,5 +12,11 @@ namespace VersionCommander.Implementation
         {
             return typeof (TAssignable).IsAssignableFrom(thisType);
         }
+        public static bool IsAssignableTo(this Type thisType, Type typeToAssignto)
+        {
+            if(typeToAssignto == null) throw new ArgumentNullException("typeToAssignto");
+
+            return typeToAssignto.IsAssignableFrom(thisType);
+        }
     }
 }

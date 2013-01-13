@@ -17,11 +17,19 @@ namespace VersionCommander.Implementation.Extensions
             return candidateSubset.All(source.Contains);
         }
 
-        public static void AddRange<TItem>(this ICollection<TItem> collection, IEnumerable<TItem> itemsToAdd)
+        public static void AddRange<TItem>(this ICollection<TItem> source, params TItem[] itemsToAdd)
         {
+            AddRange(source, (IEnumerable<TItem>)itemsToAdd);
+        }
+
+        public static void AddRange<TItem>(this ICollection<TItem> source, IEnumerable<TItem> itemsToAdd)
+        {
+            if(source == null) throw new ArgumentNullException("source");
+            if(itemsToAdd == null) throw new ArgumentNullException("itemsToAdd");
+
             foreach (var item in itemsToAdd)
             {
-                collection.Add(item);
+                source.Add(item);
             }
         }
 
@@ -53,28 +61,29 @@ namespace VersionCommander.Implementation.Extensions
                                                                         Func<TElement, TKey> keySelector) 
             where TKey : IComparable<TKey>
         {
-            return GetGroupingBy(source, keySelector, result => result < 0);
+            return GetGroupingBy(source, keySelector, isBetter: compareResult => compareResult < 0);
         }
 
         public static IGrouping<TKey, TElement> WithMax<TElement, TKey>(this IEnumerable<TElement> source,
-                                                                             Func<TElement, TKey> keySelector)
+                                                                        Func<TElement, TKey> keySelector)
             where TKey : IComparable<TKey>
         {
-            return GetGroupingBy(source, keySelector, result => result > 0);
+            return GetGroupingBy(source, keySelector, isBetter: compareResult => compareResult > 0);
         }
 
         private static IGrouping<TKey, TElement> GetGroupingBy<TElement, TKey>(IEnumerable<TElement> source, 
                                                                                Func<TElement, TKey> keySelector,    
-                                                                               Func<int, bool> comparator)
+                                                                               Func<int, bool> isBetter)
             where TKey : IComparable<TKey>
         {
             if (source == null) throw new ArgumentNullException();
+            // ReSharper disable PossibleMultipleEnumeration -- Any(), First(), and Skip(1) arnt worth ToArray, since all of them are O(1). 
             if (!source.Any()) return new EmptyGrouping<TKey, TElement>();
 
             var grouping = new Grouping<TKey, TElement>(keySelector, new[] { source.First() });
             foreach (var element in source.Skip(1))
             {
-                if (comparator(keySelector(element).CompareTo(grouping.Key)))
+                if (isBetter(keySelector(element).CompareTo(grouping.Key)))
                 {
                     grouping = new Grouping<TKey, TElement>(keySelector, new[] {element});
                 }
@@ -89,6 +98,7 @@ namespace VersionCommander.Implementation.Extensions
             }
 
             return grouping;
+            // ReSharper restore PossibleMultipleEnumeration
         }
 
         public static bool IsOrderedBy<TElement, TKey>(this IEnumerable<TElement> source,
