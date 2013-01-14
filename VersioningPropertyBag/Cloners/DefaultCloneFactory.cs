@@ -1,15 +1,24 @@
-﻿namespace VersionCommander.Implementation.Cloners
+﻿using System;
+
+namespace VersionCommander.Implementation.Cloners
 {
     public class DefaultCloneFactory<TCloned> : ICloneFactory<TCloned>
-        where TCloned : new()
     {
-        public virtual TCloned CreateCloneOf(TCloned target)
+        private readonly Func<TCloned> _clonedFactory;
+
+        public DefaultCloneFactory(Func<TCloned> clonedFactory)
+        {
+            _clonedFactory = clonedFactory;
+        }
+
+        public TCloned CreateNew()
+        {
+            return _clonedFactory.Invoke();
+        }
+
+        public TCloned CreateCloneOf(TCloned target)
         {
             return CloneHelper.TryCloneWithExplicitImplementationUnavailable(target);
-        }
-        public virtual TCloned CreateNew()
-        {
-            return new TCloned();
         }
     }
 }

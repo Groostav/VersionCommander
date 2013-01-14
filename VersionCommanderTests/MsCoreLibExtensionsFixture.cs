@@ -48,5 +48,14 @@ namespace VersionCommander.UnitTests
 
             var message = act.ShouldThrow<NotSupportedException>();
         }
+
+        [Test]
+        public void verify_isSingle()
+        {
+            new[] {1}.IsSingle().Should().BeTrue();
+
+            new object[0].IsSingle().Should().BeFalse();
+            new[] {1, 2}.IsSingle().Should().BeFalse();
+        }
     }
 }

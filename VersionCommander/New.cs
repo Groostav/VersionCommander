@@ -1,6 +1,44 @@
+<<<<<<< HEAD
 ﻿using System;
 using System.Collections.Generic;
-using Castle.DynamicProxy;
+using VersionCommander.Implementation;
+using VersionCommander.Implementation.Cloners;
+
+namespace VersionCommander
+{
+    public static class New
+    {
+        private static readonly ProxyFactory ProxyFactory;
+        static New()
+        {
+            ProxyFactory = new ProxyFactory();
+        }
+
+        public static IList<TSubject> VersioningList<TSubject>()
+            where TSubject : IVersionablePropertyBag
+        {
+            return ProxyFactory.VersioningList<TSubject>();
+        }
+
+        public static TSubject Versioning<TSubject>(Action<TSubject> constructionCustomizations = null)
+            where TSubject : class, new()
+        {
+            return Versioning(() => new TSubject(), constructionCustomizations);
+        }
+
+        public static TSubject Versioning<TSubject>(Func<TSubject> subjectFactory,
+                                                    Action<TSubject> constructionCustomizations = null)
+            where TSubject : class
+        {
+            var proxy = ProxyFactory.CreateVersioning(new DefaultCloneFactory<TSubject>(subjectFactory));
+            if (constructionCustomizations != null) constructionCustomizations.Invoke(proxy);
+            return proxy;
+        }
+
+    }
+=======
+﻿using System;
+using System.Collections.Generic;
 using VersionCommander.Implementation;
 using VersionCommander.Implementation.Cloners;
 using InternalNew = VersionCommander.Implementation.New;
@@ -43,4 +81,5 @@ namespace VersionCommander
             return InternalNew.MakeVersioningProxy(baseObject, cloneFactory, existingModifications);
         }
     }
+>>>>>>> f8d34094a494492933f5dc19bf749c84b70c5bac
 }

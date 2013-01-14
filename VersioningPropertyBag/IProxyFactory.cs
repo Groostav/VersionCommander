@@ -5,9 +5,9 @@ namespace VersionCommander.Implementation
 {
     public interface IProxyFactory
     {
-        TSubject CreateVersioning<TSubject>(TSubject baseObject,
-                                            ICloneFactory<TSubject> cloneFactory,
-                                            IEnumerable<TimestampedPropertyVersionDelta> existingChanges)
+        TSubject CreateVersioning<TSubject>(ICloneFactory<TSubject> cloneFactory,
+                                            IVersionControlNode existingControlNode = null,
+                                            TSubject existingObject = null)
             where TSubject : class;
     }
 }

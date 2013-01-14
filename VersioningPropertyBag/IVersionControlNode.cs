@@ -13,11 +13,15 @@ namespace VersionCommander.Implementation
         void RollbackTo(long targetVersion);
         object CurrentDepthCopy();
 
+        [ThereBeDragons("I cant remember how important it is that this thing is ordered. If it is, I have no assertions on that.")]
         IList<TimestampedPropertyVersionDelta> Mutations { get; }
+
         IList<IVersionControlNode> Children { get; }
+        [ThereBeDragons("multiple parents... that turns this into a full bore graph... Also unused, remove?")]
         IVersionControlNode Parent { get; set; }
 
         void Accept(IVersionControlTreeVisitor visitor);
+        void RecursiveAccept(IVersionControlTreeVisitor visitor);
 
         object Get(PropertyInfo targetProperty, long version);
         void Set(PropertyInfo targetProperty, object value, long version);
@@ -65,7 +69,7 @@ namespace VersionCommander.Implementation
             //Contract.Ensures(visitor is run on all children).
         }
 
-        public void LevelAccept(IVersionControlTreeVisitor visitor)
+        void IVersionControlNode.RecursiveAccept(IVersionControlTreeVisitor visitor)
         {
             Contract.Requires(visitor != null);
         }

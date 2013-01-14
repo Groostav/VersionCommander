@@ -17,7 +17,7 @@ namespace VersionCommander.Implementation
 
         public IVersionControlTreeVisitor MakeDeltaApplicationVisitor(ChangeType changeType, bool includeDescendents, MethodInfo targetSite = null)
         {
-            return new DeltaApplicationVisitor(includeDescendents, changeType, targetSite);
+            return new DeltaApplicationVisitor(changeType, targetSite, includeDescendents);
         }
     }
 }

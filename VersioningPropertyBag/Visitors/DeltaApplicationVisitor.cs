@@ -12,7 +12,7 @@ namespace VersionCommander.Implementation.Visitors
         private readonly bool _newStatus;
         private readonly Func<TimestampedPropertyVersionDelta, bool> _targetSiteContstraint;
 
-        public DeltaApplicationVisitor(bool searchWholeTree, ChangeType changeType, MethodInfo targetSite)
+        public DeltaApplicationVisitor(ChangeType changeType, MethodInfo targetSite, bool searchWholeTree)
         {
             _visitAllNodes = searchWholeTree;
             _newStatus = changeType == ChangeType.Redo;
@@ -27,13 +27,12 @@ namespace VersionCommander.Implementation.Visitors
             }
         }
 
-        public override void OnExit(IVersionControlNode controlNode)
+        public override void OnLastExit()
         {         
-            var targetMutation = controlNode.Mutations.Where(mutation => mutation.IsActive != _newStatus)
-                                                      .Where(_targetSiteContstraint)
-                                                      .WithMax(mutation => mutation.TimeStamp);
+            var targetMutation = Mutations.Where(mutation => mutation.IsActive != _newStatus)
+                                          .Where(_targetSiteContstraint)
+                                          .WithMax(mutation => mutation.TimeStamp);
 
-            
             if ( ! targetMutation.Any()) throw new VersionDeltaNotFoundException();
             if ( ! targetMutation.IsSingle()) throw new VersionClockResolutionException();
 
