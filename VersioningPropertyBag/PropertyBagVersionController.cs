@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -212,6 +213,8 @@ namespace VersionCommander.Implementation
 
     }
 =======
+=======
+>>>>>>> master
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -417,5 +420,8 @@ namespace VersionCommander.Implementation
 
 
     }
+<<<<<<< HEAD
 >>>>>>> f8d34094a494492933f5dc19bf749c84b70c5bac
+=======
+>>>>>>> master
 }

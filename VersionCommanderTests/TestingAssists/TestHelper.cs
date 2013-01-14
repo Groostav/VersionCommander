@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -173,6 +174,8 @@ namespace VersionCommander.UnitTests.TestingAssists
         }
     }
 =======
+=======
+>>>>>>> master
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -336,5 +339,8 @@ namespace VersionCommander.UnitTests.TestingAssists
             return A.Fake<VersionControlNodeBase>();
         }
     }
+<<<<<<< HEAD
 >>>>>>> f8d34094a494492933f5dc19bf749c84b70c5bac
+=======
+>>>>>>> master
 }

@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -65,6 +66,8 @@ namespace VersionCommander.Implementation.NullObjects
         }
     }
 =======
+=======
+>>>>>>> master
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -117,5 +120,8 @@ namespace VersionCommander.Implementation.NullObjects
             throw new NotImplementedException();
         }
     }
+<<<<<<< HEAD
 >>>>>>> f8d34094a494492933f5dc19bf749c84b70c5bac
+=======
+>>>>>>> master
 }

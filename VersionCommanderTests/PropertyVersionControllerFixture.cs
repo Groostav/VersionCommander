@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -370,6 +371,8 @@ namespace VersionCommander.UnitTests
         }
     }
 =======
+=======
+>>>>>>> master
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -743,5 +746,8 @@ namespace VersionCommander.UnitTests
             A.CallTo(() => _testHelper.ProvidedControlNode.Accept(_testHelper.ProvidedRollbackVisitor)).MustHaveHappened();
         }
     }
+<<<<<<< HEAD
 >>>>>>> f8d34094a494492933f5dc19bf749c84b70c5bac
+=======
+>>>>>>> master
 }

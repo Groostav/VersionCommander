@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 ﻿using System.Collections.Generic;
 using System.Linq;
 
@@ -37,6 +38,8 @@ namespace VersionCommander.Implementation.Visitors
         }
     }
 =======
+=======
+>>>>>>> master
 ﻿using System.Collections.Generic;
 using System.Linq;
 
@@ -74,5 +77,8 @@ namespace VersionCommander.Implementation.Visitors
             _descendents.Add(controlNode);
         }
     }
+<<<<<<< HEAD
 >>>>>>> f8d34094a494492933f5dc19bf749c84b70c5bac
+=======
+>>>>>>> master
 }

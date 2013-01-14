@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -583,6 +584,8 @@ namespace VersionCommander.UnitTests
         }
     }
 =======
+=======
+>>>>>>> master
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -1250,5 +1253,8 @@ namespace VersionCommander.UnitTests
                 //or at least thats whats evidenced by List.Add counterexample. 
         }
     }
+<<<<<<< HEAD
 >>>>>>> f8d34094a494492933f5dc19bf749c84b70c5bac
+=======
+>>>>>>> master
 }
