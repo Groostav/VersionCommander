@@ -229,8 +229,8 @@ namespace VersionCommander.UnitTests
         {
             //setup
             var baseObject = new DeepPropertyBag();
-            var childObject = A.Fake<FlatPropertyBag>();
-            var targetSite = baseObject.PropertyInfoFor(x => x.SpecialChild).GetSetMethod();
+            var childObject = A.Fake<DeepPropertyBag>();
+            var targetSite = baseObject.PropertyInfoFor(x => x.DeepChild).GetSetMethod();
 
             var controller = new PropertyBagVersionController<DeepPropertyBag>(baseObject,
                                                                                _testHelper.MakeConfiguredCloneFactoryFor<DeepPropertyBag>(),
@@ -238,11 +238,11 @@ namespace VersionCommander.UnitTests
                                                                                _testHelper.MakeConfiguredVisitorFactory(),
                                                                                _testHelper.MakeConfiguredProxyFactory());
             //act
-            TestDelegate act = () => controller.UndoLastAssignmentTo(self => self.SpecialChild.StringProperty);
+            TestDelegate act = () => controller.UndoLastAssignmentTo(self => self.DeepChild.Stringey);
 
             //assert
             Assert.Throws<UntrackedObjectException>(act);
-            A.CallTo(() => childObject.StringProperty).MustNotHaveHappened();
+            A.CallTo(() => childObject.Stringey).MustNotHaveHappened();
         }
 
         [Test]

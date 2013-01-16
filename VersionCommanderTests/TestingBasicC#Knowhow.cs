@@ -11,6 +11,7 @@ using NUnit.Framework;
 using Castle.DynamicProxy;
 using VersionCommander.Implementation;
 using VersionCommander.Implementation.Extensions;
+using VersionCommander.Implementation.NullObjects;
 using VersionCommander.UnitTests.TestingAssists;
 
 namespace VersionCommander.UnitTests
@@ -121,8 +122,7 @@ namespace VersionCommander.UnitTests
         //                var improperCast = cloneable as IVersionControlNode; //compile-time error. Intresting                
         //            }
 
-        [Test,
-         Ignore("cant dynamic proxy structs since they cant be derrived... that makes my life a fair bit easier.")]
+        [Test, Ignore("cant dynamic proxy structs since they cant be derrived... that makes my life a fair bit easier.")]
         public void when_asing_a_generated_type()
         {
             var fromCastle = new ProxyGenerator().CreateClassProxy(typeof (CloneableStruct), new object[] {"Value!"},
@@ -133,7 +133,7 @@ namespace VersionCommander.UnitTests
         }
 
         //the default of any interface is null, because interfaces are ref types. They're so ref types, the act of casting something as its interface
-        //converts it to a ref type. Intresting.
+        //converts it to a ref. Intresting.
         //Can I do equals on the default of an interface that extends IEquatable?
 
         [Test]
@@ -150,11 +150,10 @@ namespace VersionCommander.UnitTests
             var sample = new DeepPropertyBag()
                              {
                                  ChildBags = childList,
-                                 SpecialChild =
-                                     new FlatPropertyBag()
+                                 DeepChild = 
+                                     new DeepPropertyBag()
                                          {
-                                             IntProperty = 6,
-                                             StringProperty = "Sigh, I wish there were a better way"
+                                             Stringey = "Sigh, I wish there were a better way"
                                          },
                                  Stringey = "Newed"
                              };
@@ -163,9 +162,9 @@ namespace VersionCommander.UnitTests
 
             clonedViaAutomapper.Should().NotBeNull();
 
-            //ahh, so automapper doesnt actually perform a deep copy for me. I should've known this.
+            //ahh, so automapper doesnt actually perform a deep copy for me unless I create make maps for each child property type.
             clonedViaAutomapper.Should().NotBeSameAs(sample);
-            clonedViaAutomapper.SpecialChild.Should().BeSameAs(sample.SpecialChild);
+            clonedViaAutomapper.DeepChild.Should().NotBeSameAs(sample.DeepChild);
             clonedViaAutomapper.ChildBags.First().Should().BeSameAs(firstChild);
         }
 
@@ -708,6 +707,19 @@ namespace VersionCommander.UnitTests
             var y = x.Clone();
 
             x.Should().NotBeSameAs(y);
+        }
+
+        [Test]
+        public void when_calling_through_FakeItEasy_wrapper()
+        {
+            var fake = A.Fake<IVersionControlNode>();
+
+            var parent = A.Fake<IVersionControlNode>();
+            fake.Parent = parent;
+            fake.Parent.Should().NotBeNull();
+
+            fake.Parent = null;
+            fake.Parent.Should().BeNull();
         }
 
     }

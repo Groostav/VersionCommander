@@ -9,7 +9,7 @@ namespace VersionCommander.Implementation
     {
         public static bool CanInterfaceAs(this Type thisType, Type interfaceType)
         {
-            if(thisType == null) throw new ArgumentNullException("thisType");
+            if (thisType == null) throw new ArgumentNullException("thisType");
             if (interfaceType == null) throw new ArgumentNullException("interfaceType");
 
             return thisType.GetInterface(interfaceType.FullName) != null;

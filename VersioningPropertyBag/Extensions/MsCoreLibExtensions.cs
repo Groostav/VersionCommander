@@ -1,11 +1,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace VersionCommander.Implementation.Extensions
 {
-    public static class MsCorLibExtensions
+    public static class MsCoreLibExtensions
     {
         public static IDictionary<TKey, TItem> ToDictionary<TKey, TItem>(this IEnumerable<KeyValuePair<TKey, TItem>> thisKeyItemSet)
         {
@@ -45,7 +46,7 @@ namespace VersionCommander.Implementation.Extensions
             }
         }
 
-
+        [DebuggerStepThrough]
         public static void ForEach<TElement>(this IEnumerable<TElement> source, Action<TElement> action)
         {
             if (source == null) throw new ArgumentNullException("source");
@@ -57,6 +58,7 @@ namespace VersionCommander.Implementation.Extensions
             }
         }
 
+        [DebuggerStepThrough]
         public static void ForEach<TElement>(this IEnumerable<TElement> source, Action action)
         {
             if (source == null) throw new ArgumentNullException("source");
@@ -68,11 +70,20 @@ namespace VersionCommander.Implementation.Extensions
             }
         }
 
+        [DebuggerStepThrough]
+        public static IEnumerable<TElement> Except<TElement>(this IEnumerable<TElement> source, TElement excluded)
+        {
+            if (source == null) throw new ArgumentNullException("source");
+
+            return source.Except(new[] {excluded});
+        }
+
+        [DebuggerStepThrough]
         public static bool IsSingle<TElement>(this IEnumerable<TElement> source)
         {
             if(source == null) throw new ArgumentNullException("source");
 
-            return source.Count() == 1;
+            return source.Any() && ! source.Skip(1).Any();
         }
 
 
@@ -92,7 +103,7 @@ namespace VersionCommander.Implementation.Extensions
 
         private static IGrouping<TKey, TElement> GetGroupingBy<TElement, TKey>(IEnumerable<TElement> source, 
                                                                                Func<TElement, TKey> keySelector,    
-                                                                               Func<int, bool> isBetter)
+                                                                               Func<int/*TComparisonResult*/, bool> isBetter)
             where TKey : IComparable<TKey>
         {
             if (source == null) throw new ArgumentNullException("source");
@@ -101,7 +112,7 @@ namespace VersionCommander.Implementation.Extensions
             // ReSharper disable PossibleMultipleEnumeration -- Any(), First(), and Skip(1) arnt worth ToArray, since all of them are O(1). 
             if (!source.Any()) return new EmptyGrouping<TKey, TElement>();
 
-            var grouping = new Grouping<TKey, TElement>(keySelector, new[] { source.First() });
+            var grouping = new Grouping<TKey, TElement>(keySelector, new[] {source.First()});
             foreach (var element in source.Skip(1))
             {
                 if (isBetter(keySelector(element).CompareTo(grouping.Key)))

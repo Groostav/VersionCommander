@@ -114,7 +114,6 @@ namespace VersionCommander.UnitTests
                                                       targetSite: targetSite, 
                                                       searchWholeTree: true);
 
-            _testHelper.ProvidedDeltaApplicationVisitor = visitor;
             var node = _testHelper.MakeVersionControlNodeWithChildren();
             node.Mutations.AddRange(new TimestampedPropertyVersionDelta("1", targetSite, 1L, isActive:true),
                                     new TimestampedPropertyVersionDelta("2", targetSite, 2L, isActive:true));
@@ -135,7 +134,6 @@ namespace VersionCommander.UnitTests
                                                       targetSite: targetSite,
                                                       searchWholeTree: false);
 
-            _testHelper.ProvidedDeltaApplicationVisitor = visitor;
             var node = _testHelper.MakeVersionControlNodeWithChildren();
 
             var targetActiveDelta = new TimestampedPropertyVersionDelta("2", targetSite, 2L, isActive: false);
@@ -160,7 +158,6 @@ namespace VersionCommander.UnitTests
                                                       targetSite: targetSite, 
                                                       searchWholeTree: false);
 
-            _testHelper.ProvidedDeltaApplicationVisitor = visitor;
             var node = _testHelper.MakeVersionControlNodeWithChildren();
             A.CallTo(() => node.Children.First().Mutations)
              .Returns(new[]{new TimestampedPropertyVersionDelta("1", targetSite, 1L, isActive: true)});
@@ -177,16 +174,14 @@ namespace VersionCommander.UnitTests
         public void when_attempting_to_undo_something_with_ambigious_versioning()
         {
             //setup
-            var targetSite = new FlatPropertyBag().PropertyInfoFor(x => x.StringProperty).GetSetMethod();
             var visitor = new DeltaApplicationVisitor(changeType: ChangeType.Undo,
-                                                      targetSite: targetSite, 
+                                                      targetSite: TestHelper.FlatPropsString.SetMethod, 
                                                       searchWholeTree: false);
 
-            _testHelper.ProvidedDeltaApplicationVisitor = visitor;
             var node = _testHelper.MakeVersionControlNodeWithChildren();
 
-            node.Mutations.AddRange(new TimestampedPropertyVersionDelta("1", targetSite, 1L, isActive: true),
-                                    new TimestampedPropertyVersionDelta("2", targetSite, 1L, isActive: true));
+            node.Mutations.AddRange(new TimestampedPropertyVersionDelta("1", TestHelper.FlatPropsString.SetMethod, 1L, isActive: true),
+                                    new TimestampedPropertyVersionDelta("2", TestHelper.FlatPropsString.SetMethod, 1L, isActive: true));
 
             //act
             TestDelegate act = () => node.Accept(visitor);
@@ -199,22 +194,19 @@ namespace VersionCommander.UnitTests
         public void when_undoing_operation_on_child()
         {
             //setup
-            var targetSite = new FlatPropertyBag().PropertyInfoFor(x => x.StringProperty).GetSetMethod();
-
             var visitor = new DeltaApplicationVisitor(changeType: ChangeType.Undo,
-                                                      targetSite: targetSite, 
+                                                      targetSite: TestHelper.DeepPropsString.SetMethod, 
                                                       searchWholeTree: true);
 
-            _testHelper.ProvidedDeltaApplicationVisitor = visitor;
-            var parent = _testHelper.MakeVersionControlNodeWithChildren();
-            var child = _testHelper.MakeVersionControlNode();
-            parent.Children.Add(child);
+            var parent = _testHelper.MakeVersioning<DeepPropertyBag>().AsVersionControlNode();
+            var child = _testHelper.MakeVersioningObject(parent).AsVersionControlNode();
 
-            parent.Mutations.AddRange(new[]{new TimestampedPropertyVersionDelta("1", targetSite, 1L, isActive:true), 
-                                            new TimestampedPropertyVersionDelta("2", targetSite, 2L, isActive:true)});
-            var targetMutation = new TimestampedPropertyVersionDelta("4", targetSite, 4L, isActive: true);
-            child.Mutations.AddRange(new[]{new TimestampedPropertyVersionDelta("3", targetSite, 3L, isActive:true), 
-                                           targetMutation});
+            TimestampedPropertyVersionDelta targetMutation;
+
+            parent.Mutations.AddRange(new[]{                  new TimestampedPropertyVersionDelta("1", TestHelper.DeepPropsString.SetMethod, 1L, isActive:true), 
+                                                              new TimestampedPropertyVersionDelta("2", TestHelper.DeepPropsString.SetMethod, 2L, isActive:true)});
+            child.Mutations.AddRange(new[]{                   new TimestampedPropertyVersionDelta("3", TestHelper.DeepPropsString.SetMethod, 3L, isActive:true), 
+                                             targetMutation = new TimestampedPropertyVersionDelta("4", TestHelper.DeepPropsString.SetMethod, 4L, isActive:true)});
 
             //act
             parent.Accept(visitor);
@@ -222,7 +214,7 @@ namespace VersionCommander.UnitTests
             //assert
             targetMutation.IsActive.Should().BeFalse();
             parent.Mutations.Should().OnlyContain(mutation => mutation.IsActive);
-            child.Mutations.Except(new[] { targetMutation }).Should().OnlyContain(mutation => mutation.IsActive);
+            child.Mutations.Except(targetMutation).Should().OnlyContain(mutation => mutation.IsActive);
         }
     }
 }

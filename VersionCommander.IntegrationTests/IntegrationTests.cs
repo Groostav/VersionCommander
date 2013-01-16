@@ -83,7 +83,7 @@ namespace VersionCommander.IntegrationTests
             sample.IntProperty.Should().Be(expectedCounty);
             sample.StringProperty.Should().Be(expectedStringey);
 
-            sample.VersionControlNode().Mutations.Should().HaveCount(2);
+            sample.AsVersionControlNode().Mutations.Should().HaveCount(2);
         }
 
         [Test]
@@ -91,16 +91,16 @@ namespace VersionCommander.IntegrationTests
         {
             var sample = New.Versioning<DeepPropertyBag>(bag =>
                              {
-                                 bag.SpecialChild = New.Versioning<FlatPropertyBag>();                              
+                                 bag.FlatChild = New.Versioning<FlatPropertyBag>();                              
                              });
 
             sample.Should().NotBeNull();
-            sample.SpecialChild.Should().NotBeNull();
+            sample.FlatChild.Should().NotBeNull();
 
             sample.VersionCommand().Should().NotBeNull().And.BeAssignableTo<IVersionController<DeepPropertyBag>>();
-            sample.VersionControlNode().Should().NotBeNull().And.BeAssignableTo<IVersionControlNode>();
-            sample.SpecialChild.VersionCommand().Should().NotBeNull().And.BeAssignableTo<IVersionController<FlatPropertyBag>>();
-            sample.SpecialChild.VersionControlNode().Should().NotBeNull().And.BeAssignableTo<IVersionControlNode>();
+            sample.AsVersionControlNode().Should().NotBeNull().And.BeAssignableTo<IVersionControlNode>();
+            sample.FlatChild.VersionCommand().Should().NotBeNull().And.BeAssignableTo<IVersionController<FlatPropertyBag>>();
+            sample.FlatChild.AsVersionControlNode().Should().NotBeNull().And.BeAssignableTo<IVersionControlNode>();
         } 
 
         [Test]
@@ -108,14 +108,14 @@ namespace VersionCommander.IntegrationTests
         {
             var sample = New.Versioning<DeepPropertyBag>(bag =>
             {
-                bag.SpecialChild = New.Versioning<FlatPropertyBag>();
+                bag.FlatChild = New.Versioning<FlatPropertyBag>();
             });
 
             sample.Should().NotBeNull();
-            sample.SpecialChild.Should().NotBeNull();
+            sample.FlatChild.Should().NotBeNull();
 
-            sample.VersionControlNode().Children.Single().Should().BeSameAs(sample.SpecialChild.VersionControlNode());
-            sample.SpecialChild.VersionControlNode().Parent.Should().BeSameAs(sample.VersionControlNode());
+            sample.AsVersionControlNode().Children.Single().Should().BeSameAs(sample.FlatChild.AsVersionControlNode());
+            sample.FlatChild.AsVersionControlNode().Parent.Should().BeSameAs(sample.AsVersionControlNode());
         }
         
         [Test]
@@ -123,54 +123,29 @@ namespace VersionCommander.IntegrationTests
         {
             var parent = New.Versioning<DeepPropertyBag>(bag =>
                          {
-                             bag.SpecialChild = new FlatPropertyBag();
+                             bag.FlatChild = new FlatPropertyBag();
                          });
 
-            parent.SpecialChild.StringProperty = "ChildStringey";
-            
-            Assert.Throws<UntrackedObjectException>(() => parent.UndoLastAssignmentTo(x => x.SpecialChild.StringProperty));
+            parent.FlatChild.StringProperty = "ChildStringey";
+
+            Assert.Throws<UntrackedObjectException>(() => parent.UndoLastAssignmentTo(x => x.FlatChild.StringProperty));
         }
         
         [Test]
-        //THIS IS PRETTY FUCKIN COOL.
         public void when_asking_for_a_previous_version_of_the_parent_it_should_bundle_a_previous_version_of_all_children()
         {
             var sample = New.Versioning<DeepPropertyBag>(bag =>
                          {
-                             bag.SpecialChild = New.Versioning<FlatPropertyBag>();
+                             bag.FlatChild = New.Versioning<FlatPropertyBag>();
                          });
             var timeOfConstruction = Stopwatch.GetTimestamp();
 
-            sample.SpecialChild.StringProperty = "ChildStringey";
+            sample.FlatChild.StringProperty = "ChildStringey";
             sample.Stringey = "Parent Stringy";
 
             var copy = sample.WithoutModificationsPast(timeOfConstruction);
             copy.Stringey.Should().BeNull();
-            copy.SpecialChild.StringProperty.Should().BeNull();
+            copy.FlatChild.StringProperty.Should().BeNull();
         }        
-
-        //TODO assert IsActive fix actually moves stuff to new memory.
-
-        //get grand-fathering working
-            //controller unit tests asserts that RunVisitorOnTree with Clone was called
-            //also edits a copied child and makes sure the original wasnt altered
-
-        //Make sure garbage collection works        
-            //untested, unbouded memory growth.
-
-        //make sure references make sense.
-            //uhhhnnnyeehh-untested
-        //make sure equals works as expected
-                
-
-        //whatever soluition you come up with for grand fathering make sure it threads well
-        //make sure that if objects are tagged with IVersionablePropertyBag but not checked in anywhere everything still acts as expected
-
-        //use cases:
-            //user hits cancel after a series of dialogs, must undo all the dialogs
-                //could be done via cloning the object, catching the event and re-assigning the clone.
-            //user hits undo
-            //user hits undo multiple times
-            //user hits redo...
     }
 }

@@ -2,7 +2,7 @@
 
 namespace VersionCommander.UnitTests.TestingAssists
 {
-    public abstract class FakeFlatPropertyBag : FlatPropertyBag, IVersionControlProvider
+    public abstract class FakeFlatPropertyBag : FlatPropertyBag, IVersionControlledObject
     {
         private static int nextId;
         public int Id { get; private set; }
@@ -12,7 +12,11 @@ namespace VersionCommander.UnitTests.TestingAssists
             Id = nextId++;
         }
 
-        public abstract IVersionControlNode GetVersionControlNode();
-        public abstract IVersionController<TSubject> GetVersionController<TSubject>();
+        public abstract IVersionControlNode AsVersionControlNode();
+        public abstract IVersionController<TSubject> AsVersionController<TSubject>();
+        public TSubject AsNativeObject<TSubject>() where TSubject : class
+        {
+            return this as TSubject;
+        }
     }
 }

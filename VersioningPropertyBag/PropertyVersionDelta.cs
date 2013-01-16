@@ -39,19 +39,22 @@ namespace VersionCommander.Implementation
         {
         }
 
-        public bool IsSettingVersioningObject()
+        public bool IsSettingVersioningObject
         {
-            //not sure this is a good dependency, but its convienient. Could refactor to "IsSetting<TSomething>()",
+            get
+            {
+                //not sure this is a good dependency, but its convienient. Could refactor to "IsSetting<TSomething>()",
                 //but then I lose the routing through the VersionControlNode extension method.
                 //maybe the MS Explicit cast operator can help me here?
-            if ( ! TargetSite.IsPropertySetter())
-            {
-                return false;
-            }
-            var setValue = Arguments.Single();
 
-            //full expensive call:
-            return setValue.VersionControlNode() != null;
+                if ( ! TargetSite.IsPropertySetter())
+                {
+                    return false;
+                }
+                var setValue = Arguments.Single();
+
+                return setValue.AsVersionControlNode() != null;
+            }
         }
     }
 

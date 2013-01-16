@@ -20,16 +20,12 @@ namespace VersionCommander.Implementation
 
         public void Accept(IVersionControlTreeVisitor visitor)
         {
-            visitor.OnFirstEntry();
-            RecursiveAccept(visitor);
-            visitor.OnLastExit();
+            VisitorBehavior.Accept(this, visitor);
         }
 
         public void RecursiveAccept(IVersionControlTreeVisitor visitor)
         {
-            visitor.OnEntry(this);
-            Children.ForEach(child => child.RecursiveAccept(visitor));
-            visitor.OnExit(this);
+            VisitorBehavior.RecursiveAccept(this, visitor);
         }
 
         public abstract void RollbackTo(long targetVersion);
@@ -37,5 +33,25 @@ namespace VersionCommander.Implementation
 
         public abstract object Get(PropertyInfo targetProperty, long version = long.MaxValue);
         public abstract void Set(PropertyInfo targetProperty, object value, long version);
+    }
+
+    public static class VisitorBehavior
+    {
+        public static void Accept(IVersionControlNode hostingNode, IVersionControlTreeVisitor visitor)
+        {
+            visitor.OnFirstEntry();
+            hostingNode.RecursiveAccept(visitor);
+            visitor.OnLastExit();
+        }
+        public static void RecursiveAccept(IVersionControlNode hostingNode, IVersionControlTreeVisitor visitor)
+        {
+            visitor.OnEntry(hostingNode);
+            //I have a concurrency problem. You may not muitate children while i foreach through it.
+            for (var i = 0; i < hostingNode.Children.Count; i++)
+            {
+                hostingNode.Children[i].RecursiveAccept(visitor);
+            }
+            visitor.OnExit(hostingNode);
+        }
     }
 }

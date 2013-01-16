@@ -13,14 +13,14 @@ namespace VersionCommander.IntegrationTests
             stopwatch.Start();
             var sample = New.Versioning<DeepPropertyBag>(bag =>
             {
-                bag.SpecialChild = New.Versioning<FlatPropertyBag>();
+                bag.FlatChild = New.Versioning<FlatPropertyBag>();
             });
             stopwatch.Stop();
             Console.WriteLine("First construction took {0}ms", stopwatch.ElapsedMilliseconds);
             var timeOfConstruction = Stopwatch.GetTimestamp();
 
             const string constructionChildString = "ChildStringey";
-            sample.SpecialChild.StringProperty = constructionChildString;
+            sample.FlatChild.StringProperty = constructionChildString;
             sample.Stringey = "Parent Stringy";
 
             stopwatch.Restart();
@@ -30,7 +30,7 @@ namespace VersionCommander.IntegrationTests
             stopwatch.Stop();
             Console.WriteLine("first call to 'WithoutModificationsPast' took {0}ms", stopwatch.ElapsedMilliseconds);
             copy.Stringey.Should().BeNull();
-            copy.SpecialChild.StringProperty.Should().BeNull();
+            copy.FlatChild.StringProperty.Should().BeNull();
 
             const string desiredString = "This change gets in before the next timestamp!";
             sample.Stringey = desiredString;
@@ -38,7 +38,7 @@ namespace VersionCommander.IntegrationTests
             var newTimestamp = Stopwatch.GetTimestamp();
 
             sample.Stringey = "Another change!";
-            sample.SpecialChild.StringProperty = "Yet more changes!";
+            sample.FlatChild.StringProperty = "Yet more changes!";
 
             stopwatch.Restart();
             copy = sample.WithoutModificationsPast(newTimestamp);
@@ -46,7 +46,7 @@ namespace VersionCommander.IntegrationTests
             Console.WriteLine("Second call to 'WithoutModificationsPast' took {0}ms", stopwatch.ElapsedMilliseconds);
 
             copy.Stringey.Should().Be(desiredString);
-            copy.SpecialChild.StringProperty.Should().Be(constructionChildString);
+            copy.FlatChild.StringProperty.Should().Be(constructionChildString);
 
             Console.WriteLine("any key to exit");
             Console.ReadKey();

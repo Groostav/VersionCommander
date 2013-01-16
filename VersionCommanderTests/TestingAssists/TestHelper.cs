@@ -15,7 +15,28 @@ namespace VersionCommander.UnitTests.TestingAssists
 {
     public class TestHelper
     {
-        public const string NonNullDefaultString = "Non Null Default";
+        #region stateless shortcut statics
+        public static PropertyInfo DeepNestedVersioner
+        {
+            get { return MethodInfoExtensions.GetPropertyInfo<DeepPropertyBag, DeepPropertyBag>(x => x.DeepChild); }
+        }
+        public static PropertyInfo GrandDeepPropsVersioner
+        {
+            get { return MethodInfoExtensions.GetPropertyInfo<GrandDeepPropertyBag, DeepPropertyBag>(x => x.DeepChild); }
+        }
+        public static PropertyInfo DeepPropsFlatVersioner
+        {
+            get { return MethodInfoExtensions.GetPropertyInfo<DeepPropertyBag, FlatPropertyBag>(x => x.FlatChild); }
+        }
+        public static PropertyInfo DeepPropsString
+        {
+            get { return MethodInfoExtensions.GetPropertyInfo<DeepPropertyBag, string>(x => x.Stringey); }
+        }
+        public static PropertyInfo FlatPropsString
+        {
+            get { return MethodInfoExtensions.GetPropertyInfo<FlatPropertyBag, string>(x => x.StringProperty); }
+        }
+        #endregion
 
         public TestHelper()
         {
@@ -67,15 +88,15 @@ namespace VersionCommander.UnitTests.TestingAssists
 
         public IProxyFactory MakeConfiguredProxyFactory()
         {
-            ProvidedProxyFactory = A.Fake<IProxyFactory>();
-            ProvidedControlNode = A.Fake<IVersionControlNode>();
-            ProvidedFlatPropertyBag = A.Fake<FakeFlatPropertyBag>();
+            ProvidedProxyFactory = ProvidedProxyFactory ?? A.Fake<IProxyFactory>();
+            ProvidedControlNode = ProvidedControlNode ?? A.Fake<IVersionControlNode>();
+            ProvidedFlatPropertyBag = ProvidedFlatPropertyBag ?? A.Fake<FakeFlatPropertyBag>();
 
             A.CallTo(() => ProvidedProxyFactory.CreateVersioning<FlatPropertyBag>(null, null, null))
              .WithAnyArguments()
              .Returns(ProvidedFlatPropertyBag);
 
-            A.CallTo(() => ProvidedFlatPropertyBag.GetVersionControlNode())
+            A.CallTo(() => ProvidedFlatPropertyBag.AsVersionControlNode())
              .WithAnyArguments()
              .Returns(ProvidedControlNode);
 
@@ -121,14 +142,6 @@ namespace VersionCommander.UnitTests.TestingAssists
                 //never yield return new! those three keywords should be banned when used in succession!
         }
 
-        public static IVersionControlNode CreateAndAddVersioningChildTo(
-            PropertyBagVersionController<FlatPropertyBag> controller)
-        {
-            var child = A.Fake<IVersionControlNode>();
-            controller.Children.Add(child);
-            return child;
-        }
-
         public static TBuildable CreateWithNonDefaultProperties<TBuildable>()
         {
             return Builder<TBuildable>.CreateNew().Build();
@@ -157,21 +170,65 @@ namespace VersionCommander.UnitTests.TestingAssists
             return node;
         }
 
-        public IVersionControlNode MakeVersionControlNode()
+        public class TestHelperObject
         {
-            return A.Fake<VersionControlNodeBase>();
         }
 
-        public TimestampedPropertyVersionDelta CreateDeltaAndAssociateWithNode<TSetValue>(IVersionControlNode child, 
-                                                                                          MethodInfo setMethod, 
-                                                                                          long timestamp, 
-                                                                                          bool isActive)
+        public IVersionControlledObject MakeVersioningObject(IVersionControlNode parent = null)
         {
-            var fakeSetValue = A.Fake<TSetValue>(options => options.Implements(typeof(IVersionControlNode)));
-            
-            throw new NotImplementedException();
+            return MakeVersioningNodeBasedOn<TestHelperObject>(parent);
+        }
+        public IVersionControlledObject MakeVersioningObject(IVersionControlledObject parent)
+        {
+            return MakeVersioningNodeBasedOn<TestHelperObject>(parent.AsVersionControlNode());
+        }
+        public IVersionControlledObject MakeVersioning<TSubject>(IVersionControlNode parent = null)
+            where TSubject : class
+        {
+            return MakeVersioningNodeBasedOn<TSubject>(parent);
+        }
+        public IVersionControlledObject MakeVersioning<TSubject>(IVersionControlledObject parent) 
+            where TSubject : class
+        {
+            return MakeVersioningNodeBasedOn<TSubject>(parent.AsVersionControlNode());
+        }
+   
 
-            return new TimestampedPropertyVersionDelta(fakeSetValue, setMethod, timestamp, isActive);
+        private IVersionControlledObject MakeVersioningNodeBasedOn<TSubject>(IVersionControlNode parent = null)
+             where TSubject : class
+        {
+            var node = A.Fake<IVersionControlNode>(options => options
+                .Implements(typeof(IVersionController<TSubject>))
+                .Wrapping(new FakeVersionControlNodeBase()));
+
+            var obj = A.Fake<TSubject>(options => options.Implements(typeof(IVersionControlledObject))) as IVersionControlledObject;
+
+            A.CallTo(() => obj.AsVersionControlNode()).Returns(node);
+            A.CallTo(() => obj.AsVersionController<TSubject>()).Returns(node as IVersionController<TSubject>);
+            A.CallTo(() => obj.AsNativeObject<TSubject>()).Returns(obj as TSubject);
+
+            if (parent != null)
+            {
+                parent.Children.Add(node);
+                node.Parent = parent;
+            }
+
+            return obj;
+        }
+
+        public IVersionControlledObject ConfigureCurrentDepthCopy(IVersionControlledObject child)
+        {
+            var swappedChild = MakeVersioningObject();
+            A.CallTo(() => child.AsVersionControlNode().CurrentDepthCopy()).Returns(swappedChild);
+
+            var swappedNode = swappedChild.AsVersionControlNode();
+            var childNode = child.AsVersionControlNode();
+
+            swappedNode.Children.AddRange(childNode.Children);
+            swappedNode.Parent = childNode.Parent;
+            swappedNode.Mutations.AddRange(childNode.Mutations.Select(mutation => new TimestampedPropertyVersionDelta(mutation)));
+
+            return swappedChild;
         }
     }
 }

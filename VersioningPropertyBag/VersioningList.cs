@@ -170,7 +170,7 @@ namespace VersionCommander.Implementation
 
         private void TryAddToChildren(TElement item)
         {
-            var controller = item.VersionControlNode();
+            var controller = item.AsVersionControlNode();
             if (controller != null)
             {
                 Children.Add(controller);
@@ -180,7 +180,7 @@ namespace VersionCommander.Implementation
 
         private void TryRemoveFromChildren(TElement item)
         {
-            var controller = item.VersionControlNode();
+            var controller = item.AsVersionControlNode();
             if (controller != null)
             {
                 var wasRemoved = Children.Remove(controller);

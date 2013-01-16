@@ -12,7 +12,7 @@ namespace VersionCommander.UnitTests
         [Test]
         public void verify_IsOrderedBy()
         {
-            var list = new List<int>() { 1, 2, 3, 4 };
+            var list = new List<int>() {1, 2, 3, 4};
 
             list.IsOrderedBy(item => item).Should().BeTrue();
 
@@ -44,7 +44,7 @@ namespace VersionCommander.UnitTests
         [Test]
         public void when_constructing_a_grouping_with_non_zero_comparables()
         {
-            var act = new Action(() => new Grouping<int, int>(x => x, new[]{1, 2}));
+            var act = new Action(() => new Grouping<int, int>(x => x, new[] {1, 2}));
 
             var message = act.ShouldThrow<NotSupportedException>();
         }
@@ -54,7 +54,7 @@ namespace VersionCommander.UnitTests
         {
             new[] {1}.IsSingle().Should().BeTrue();
 
-            new object[0].IsSingle().Should().BeFalse();
+            new int[0].IsSingle().Should().BeFalse();
             new[] {1, 2}.IsSingle().Should().BeFalse();
         }
     }

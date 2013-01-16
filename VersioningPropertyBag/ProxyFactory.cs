@@ -5,6 +5,7 @@ using System.Threading;
 using Castle.DynamicProxy;
 using VersionCommander.Implementation.Cloners;
 using VersionCommander.Implementation.Extensions;
+using VersionCommander.Implementation.Interceptors;
 using VersionCommander.Implementation.NullObjects;
 
 namespace VersionCommander.Implementation
@@ -33,8 +34,8 @@ namespace VersionCommander.Implementation
             existingControlNode = existingControlNode ?? new NullVersionControlNode();
 
             var proxy = MakeVersioningProxy(clone, cloneFactory, existingControlNode.Mutations);
-            proxy.VersionControlNode().Children.AddRange(existingControlNode.Children);
-
+            proxy.AsVersionControlNode().Children.AddRange(existingControlNode.Children);
+ 
             return proxy;
         }
 
@@ -61,7 +62,7 @@ namespace VersionCommander.Implementation
             var versionControlInterceptor = new VersionControlInterceptor<TSubject>(controller);
 
             var proxy = _generator.CreateClassProxyWithTarget(classToProxy:                 typeof(TSubject),
-                                                              additionalInterfacesToProxy:  new[] { typeof (IVersionControlProvider) },
+                                                              additionalInterfacesToProxy:  new[] { typeof (IVersionControlledObject) },
                                                               target:                       baseObject,
                                                               options:                      ProxyGenerationOptions.Default,
                                                               constructorArguments:         Enumerable.Empty<object>().ToArray(),

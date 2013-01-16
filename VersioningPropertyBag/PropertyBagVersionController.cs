@@ -85,7 +85,13 @@ namespace VersionCommander.Implementation
 
         public override object CurrentDepthCopy()
         {
-            return _proxyFactory.CreateVersioning(_cloneFactory, existingControlNode: this, existingObject: _content);
+            var newProxy = _proxyFactory.CreateVersioning(_cloneFactory, existingControlNode: this, existingObject: _content);
+            var node = newProxy.AsVersionControlNode();
+
+            node.Parent = Parent;
+            node.Children.AddRange(Children);
+
+            return newProxy;
         }
 
         public TSubject GetCurrentVersion()
@@ -96,7 +102,7 @@ namespace VersionCommander.Implementation
         public TSubject WithoutModificationsPast(long ticks)
         {
             var clone = _proxyFactory.CreateVersioning(_cloneFactory, existingControlNode: this, existingObject: _content);
-            var cloneControlNode = clone.VersionControlNode();
+            var cloneControlNode = clone.AsVersionControlNode();
             Debug.Assert(cloneControlNode != null);
 
             cloneControlNode.Accept(_visitorFactory.MakeVisitor<FindAndCopyVersioningChildVisitor>());
@@ -108,7 +114,7 @@ namespace VersionCommander.Implementation
         public TSubject WithoutVersionControl()
         {
             var clone = _cloneFactory.CreateCloneOf(_content);
-            foreach (var versionDelta in base.Mutations)
+            foreach (var versionDelta in Mutations)
             {
                 versionDelta.InvokedOn(clone);
             }
@@ -118,7 +124,7 @@ namespace VersionCommander.Implementation
         public override object Get(PropertyInfo targetProperty, long version = long.MaxValue)
         {
             var lastReturned = Mutations.Where(mutation => mutation.TimeStamp < version && mutation.IsActive)
-                                         .LastOrDefault(mutation => mutation.TargetSite == targetProperty.GetSetMethod());
+                                        .LastOrDefault(mutation => mutation.TargetSite == targetProperty.GetSetMethod());
 
             return lastReturned != null
                        ? lastReturned.Arguments.Single()

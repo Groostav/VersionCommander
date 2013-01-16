@@ -8,16 +8,15 @@ using VersionCommander.Implementation.Visitors;
 namespace VersionCommander.Implementation
 {
     [ContractClass(typeof(VersionControlNodeContracts))]
+    //TODO: make sure a node throws if its allready checked in to version control under an object, and somebody else tries to check it in. 
     public interface IVersionControlNode
     {
         void RollbackTo(long targetVersion);
         object CurrentDepthCopy();
 
-        [ThereBeDragons("I cant remember how important it is that this thing is ordered. If it is, I have no assertions on that.")]
         IList<TimestampedPropertyVersionDelta> Mutations { get; }
 
         IList<IVersionControlNode> Children { get; }
-        [ThereBeDragons("multiple parents... that turns this into a full bore graph... Also unused, remove?")]
         IVersionControlNode Parent { get; set; }
 
         void Accept(IVersionControlTreeVisitor visitor);
