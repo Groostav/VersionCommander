@@ -23,7 +23,7 @@ namespace VersionCommander.Implementation.Visitors
             foreach (var indexCandidatePair in candidatesByIndex)
             {
                 var versioningChild = indexCandidatePair.Value.Arguments.Single();
-                var versioningPropertyValueClone = versioningChild.AsVersionControlNode().CurrentDepthCopy();
+                var versioningPropertyValueClone = versioningChild.GetVersionControlNode().CurrentDepthCopy();
 
                 controlNode.Mutations[indexCandidatePair.Key] = new TimestampedPropertyVersionDelta(indexCandidatePair.Value, versioningPropertyValueClone); 
             }
@@ -32,7 +32,7 @@ namespace VersionCommander.Implementation.Visitors
 
             var children = candidatesByIndex.GroupBy(mutation => mutation.Value.TargetSite)
                                             .Select(group => group.Last())
-                                            .Select(mutation => mutation.Value.Arguments.Single().AsVersionControlNode());
+                                            .Select(mutation => mutation.Value.Arguments.Single().GetVersionControlNode());
 
             controlNode.Children.Clear();
             controlNode.Children.AddRange(children);

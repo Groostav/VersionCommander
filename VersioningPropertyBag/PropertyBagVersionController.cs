@@ -83,7 +83,7 @@ namespace VersionCommander.Implementation
         public override object CurrentDepthCopy()
         {
             var newProxy = _proxyFactory.CreateVersioning(_cloneFactory, existingControlNode: this, existingObject: _content);
-            var node = newProxy.AsVersionControlNode();
+            var node = newProxy.GetVersionControlNode();
 
             node.Parent = Parent;
             node.Children.AddRange(Children);
@@ -99,7 +99,7 @@ namespace VersionCommander.Implementation
         public TSubject WithoutModificationsPast(long ticks)
         {
             var clone = _proxyFactory.CreateVersioning(_cloneFactory, existingControlNode: this, existingObject: _content);
-            var cloneControlNode = clone.AsVersionControlNode();
+            var cloneControlNode = clone.GetVersionControlNode();
             Debug.Assert(cloneControlNode != null);
 
             cloneControlNode.Accept(_visitorFactory.MakeVisitor<FindAndCopyVersioningChildVisitor>());

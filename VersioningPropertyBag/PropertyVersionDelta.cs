@@ -53,7 +53,7 @@ namespace VersionCommander.Implementation
                 }
                 var setValue = Arguments.Single();
 
-                return setValue.AsVersionControlNode() != null;
+                return setValue.GetVersionControlNode() != null;
             }
         }
     }

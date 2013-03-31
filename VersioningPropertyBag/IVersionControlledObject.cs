@@ -2,8 +2,8 @@
 {
     public interface IVersionControlledObject
     {
-        IVersionControlNode AsVersionControlNode();
-        IVersionController<TSubject> AsVersionController<TSubject>();
-        TSubject AsNativeObject<TSubject>() where TSubject : class;
+        IVersionControlNode GetVersionControlNode();
+        IVersionController<TSubject> GetVersionController<TSubject>();
+        TSubject GetNativeObject<TSubject>() where TSubject : class;
     }
 }

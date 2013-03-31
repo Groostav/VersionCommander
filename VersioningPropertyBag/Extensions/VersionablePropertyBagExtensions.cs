@@ -5,10 +5,10 @@ namespace VersionCommander.Implementation.Extensions
 {
     public static class VersionablePropertyBagExtensions
     {
-        public static IVersionControlNode AsVersionControlNode<TSubject>(this TSubject node)
+        public static IVersionControlNode GetVersionControlNode<TSubject>(this TSubject node)
         {
             var subjectAsT = CheckAndTryCast<IVersionControlledObject>(node);
-            return subjectAsT == null ? null : subjectAsT.AsVersionControlNode();
+            return subjectAsT == null ? null : subjectAsT.GetVersionControlNode();
         }
 
         public static TDesired CheckAndCast<TDesired>(object subject)

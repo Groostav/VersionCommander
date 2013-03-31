@@ -191,8 +191,8 @@ namespace VersionCommander.UnitTests
                                                       targetSite: TestHelper.DeepPropsString.SetMethod, 
                                                       searchWholeTree: true);
 
-            var parent = _testHelper.MakeVersioning<DeepPropertyBag>().AsVersionControlNode();
-            var child = _testHelper.MakeVersioningObject(parent).AsVersionControlNode();
+            var parent = _testHelper.MakeVersioning<DeepPropertyBag>().GetVersionControlNode();
+            var child = _testHelper.MakeVersioningObject(parent).GetVersionControlNode();
 
             TimestampedPropertyVersionDelta targetMutation;
 

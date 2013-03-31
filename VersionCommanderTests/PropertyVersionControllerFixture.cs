@@ -238,11 +238,11 @@ namespace VersionCommander.UnitTests
                                                                                _testHelper.MakeConfiguredVisitorFactory(),
                                                                                _testHelper.MakeConfiguredProxyFactory());
             //act
-            TestDelegate act = () => controller.UndoLastAssignmentTo(self => self.DeepChild.Stringey);
+            TestDelegate act = () => controller.UndoLastAssignmentTo(self => self.DeepChild.DeepStringProperty);
 
             //assert
             Assert.Throws<UntrackedObjectException>(act);
-            A.CallTo(() => childObject.Stringey).MustNotHaveHappened();
+            A.CallTo(() => childObject.DeepStringProperty).MustNotHaveHappened();
         }
 
         [Test]

@@ -12,9 +12,9 @@ namespace VersionCommander.UnitTests.TestingAssists
             Id = nextId++;
         }
 
-        public abstract IVersionControlNode AsVersionControlNode();
-        public abstract IVersionController<TSubject> AsVersionController<TSubject>();
-        public TSubject AsNativeObject<TSubject>() where TSubject : class
+        public abstract IVersionControlNode GetVersionControlNode();
+        public abstract IVersionController<TSubject> GetVersionController<TSubject>();
+        public TSubject GetNativeObject<TSubject>() where TSubject : class
         {
             return this as TSubject;
         }

@@ -19,9 +19,9 @@ namespace VersionCommander.IntegrationTests
             Console.WriteLine("First construction took {0}ms", stopwatch.ElapsedMilliseconds);
             var timeOfConstruction = Stopwatch.GetTimestamp();
 
-            const string constructionChildString = "ChildStringey";
+            const string constructionChildString = "Child String";
             sample.FlatChild.StringProperty = constructionChildString;
-            sample.Stringey = "Parent Stringy";
+            sample.DeepStringProperty = "Parent String";
 
             stopwatch.Restart();
             //ok, so I was hoping that Castle would cache the proxy type, but the profiler says otherwise.
@@ -29,15 +29,15 @@ namespace VersionCommander.IntegrationTests
             var copy = sample.WithoutModificationsPast(timeOfConstruction);
             stopwatch.Stop();
             Console.WriteLine("first call to 'WithoutModificationsPast' took {0}ms", stopwatch.ElapsedMilliseconds);
-            copy.Stringey.Should().BeNull();
+            copy.DeepStringProperty.Should().BeNull();
             copy.FlatChild.StringProperty.Should().BeNull();
 
             const string desiredString = "This change gets in before the next timestamp!";
-            sample.Stringey = desiredString;
+            sample.DeepStringProperty = desiredString;
 
             var newTimestamp = Stopwatch.GetTimestamp();
 
-            sample.Stringey = "Another change!";
+            sample.DeepStringProperty = "Another change!";
             sample.FlatChild.StringProperty = "Yet more changes!";
 
             stopwatch.Restart();
@@ -45,7 +45,7 @@ namespace VersionCommander.IntegrationTests
             stopwatch.Stop();
             Console.WriteLine("Second call to 'WithoutModificationsPast' took {0}ms", stopwatch.ElapsedMilliseconds);
 
-            copy.Stringey.Should().Be(desiredString);
+            copy.DeepStringProperty.Should().Be(desiredString);
             copy.FlatChild.StringProperty.Should().Be(constructionChildString);
 
             Console.WriteLine("any key to exit");

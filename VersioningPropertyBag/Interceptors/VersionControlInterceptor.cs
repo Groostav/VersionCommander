@@ -18,13 +18,13 @@ namespace VersionCommander.Implementation.Interceptors
             TSubject previousValue;
             if (IsSettingPreviouslyVersioningChild(invocation, out previousValue))
             {
-                _controller.Children.Remove(previousValue.AsVersionControlNode());
+                _controller.Children.Remove(previousValue.GetVersionControlNode());
             }
             if (IsSettingNewVersionableObjectOnSubject(invocation))
             {
-                var newRepo = invocation.Arguments.Single().AsVersionControlNode();
+                var newRepo = invocation.Arguments.Single().GetVersionControlNode();
                 _controller.Children.Add(newRepo);
-                newRepo.Parent = invocation.Proxy.AsVersionControlNode();
+                newRepo.Parent = invocation.Proxy.GetVersionControlNode();
 
                 //still actually need to 'set' the object on the parent, leave that to SubjectPropertyInterceptor
                 invocation.Proceed(); 
@@ -51,7 +51,7 @@ namespace VersionCommander.Implementation.Interceptors
         private bool IsAskingForNativeObject(IInvocation invocation)
         {
             return invocation.Method == MethodInfoExtensions.GetMethodInfo<IVersionControlledObject, TSubject>(
-                                        x => x.AsNativeObject<TSubject>());
+                                        x => x.GetNativeObject<TSubject>());
         }
 
         private bool IsSettingPreviouslyVersioningChild(IInvocation invocation, out TSubject childSubject)

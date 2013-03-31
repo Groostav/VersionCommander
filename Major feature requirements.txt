@@ -1,0 +1,4 @@
+- Versionable list
+- defined behavior for multi-parent hierarchies
+- better descriptive usage examples
+- how-to implement your own versioning object

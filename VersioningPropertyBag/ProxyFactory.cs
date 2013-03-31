@@ -15,7 +15,7 @@ namespace VersionCommander.Implementation
         static ProxyFactory()
         {
             //Force AutoMapper into the GAC. this takes about 1.5s, good speedup if I'm not asked to version anything in that time.
-            new Thread(() => Assembly.GetAssembly(typeof (AutoMapper.Mapper))).Start();
+//            new Thread(() => Assembly.GetAssembly(typeof (AutoMapper.Mapper))).Start();
         }
 
         private readonly ProxyGenerator _generator;
@@ -34,7 +34,7 @@ namespace VersionCommander.Implementation
             existingControlNode = existingControlNode ?? new NullVersionControlNode();
 
             var proxy = MakeVersioningProxy(clone, cloneFactory, existingControlNode.Mutations);
-            proxy.AsVersionControlNode().Children.AddRange(existingControlNode.Children);
+            proxy.GetVersionControlNode().Children.AddRange(existingControlNode.Children);
  
             return proxy;
         }

@@ -19,7 +19,7 @@ namespace VersionCommander.UnitTests.TestingAssists
         public virtual FlatPropertyBag FlatChild { get; set; }
 
         public virtual IList<FlatPropertyBag> ChildBags { get; set; }
-        public virtual string Stringey { get; set; }
+        public virtual string DeepStringProperty { get; set; }
 
         public object Clone()
         {

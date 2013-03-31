@@ -28,7 +28,7 @@ namespace VersionCommander.UnitTests
             //setup
             var visitor = new FindAndCopyVersioningChildVisitor();
 
-            var parent = _testHelper.MakeVersioning<FlatPropertyBag>().AsVersionControlNode();
+            var parent = _testHelper.MakeVersioning<FlatPropertyBag>().GetVersionControlNode();
             
             parent.Mutations.AddRange(new TimestampedPropertyVersionDelta("1", TestHelper.FlatPropsString.SetMethod, 1L),
                                       new TimestampedPropertyVersionDelta("2", TestHelper.FlatPropsString.SetMethod, 2L),
@@ -48,11 +48,11 @@ namespace VersionCommander.UnitTests
             //setup
             var visitor = new FindAndCopyVersioningChildVisitor();
 
-            var parent = _testHelper.MakeVersioning<DeepPropertyBag>().AsVersionControlNode();
+            var parent = _testHelper.MakeVersioning<DeepPropertyBag>().GetVersionControlNode();
             var givenChild = _testHelper.MakeVersioning<DeepPropertyBag>(parent);
             var swappedChild = _testHelper.MakeVersioning<DeepPropertyBag>();
 
-            A.CallTo(() => givenChild.AsVersionControlNode().CurrentDepthCopy()).Returns(swappedChild);
+            A.CallTo(() => givenChild.GetVersionControlNode().CurrentDepthCopy()).Returns(swappedChild);
 
             var givenMutation = new TimestampedPropertyVersionDelta(givenChild, TestHelper.DeepNestedVersioner.SetMethod, 1L);
             parent.Mutations.Add(givenMutation);
@@ -61,14 +61,14 @@ namespace VersionCommander.UnitTests
             parent.Accept(visitor);
 
             //assert
-            parent.Children.Should().NotIntersectWith(new[] {givenChild.AsVersionControlNode(), parent});
-            parent.Children.Should().ContainSingle(actualChild => ReferenceEquals(actualChild, swappedChild.AsVersionControlNode()));
+            parent.Children.Should().NotIntersectWith(new[] {givenChild.GetVersionControlNode(), parent});
+            parent.Children.Should().ContainSingle(actualChild => ReferenceEquals(actualChild, swappedChild.GetVersionControlNode()));
 
             parent.Mutations.Single().Should().NotBeSameAs(givenMutation);
 
-            A.CallTo(() => givenChild.AsVersionControlNode().CurrentDepthCopy())
+            A.CallTo(() => givenChild.GetVersionControlNode().CurrentDepthCopy())
              .MustHaveHappened(Repeated.Exactly.Once);
-            A.CallTo(() => swappedChild.AsVersionControlNode().RecursiveAccept(null))
+            A.CallTo(() => swappedChild.GetVersionControlNode().RecursiveAccept(null))
              .WhenArgumentsMatch(args => args.Single() is FindAndCopyVersioningChildVisitor)
              .MustHaveHappened(Repeated.Exactly.Once);
         }
@@ -80,25 +80,25 @@ namespace VersionCommander.UnitTests
             var visitor = new FindAndCopyVersioningChildVisitor();
 
             var parent = _testHelper.MakeVersioning<DeepPropertyBag>();
-            var child = MakeChildAndAssociativeMutationTo(parent.AsNativeObject<DeepPropertyBag>());
+            var child = MakeChildAndAssociativeMutationTo(parent.GetNativeObject<DeepPropertyBag>());
 
-            var orphanedGrandchild = MakeChildAndAssociativeMutationTo(child.AsNativeObject<DeepPropertyBag>());
-            var grandChild = MakeChildAndAssociativeMutationTo(child.AsNativeObject<DeepPropertyBag>());
+            var orphanedGrandchild = MakeChildAndAssociativeMutationTo(child.GetNativeObject<DeepPropertyBag>());
+            var grandChild = MakeChildAndAssociativeMutationTo(child.GetNativeObject<DeepPropertyBag>());
 
-            child.AsVersionControlNode().Children.Remove(orphanedGrandchild.AsVersionControlNode());
-            orphanedGrandchild.AsVersionControlNode().Parent = null;
+            child.GetVersionControlNode().Children.Remove(orphanedGrandchild.GetVersionControlNode());
+            orphanedGrandchild.GetVersionControlNode().Parent = null;
 
             var swappedChild = _testHelper.ConfigureCurrentDepthCopy(child);
             var swappedGrandchild = _testHelper.ConfigureCurrentDepthCopy(grandChild);
 
             //act
-            parent.AsVersionControlNode().Accept(visitor);
+            parent.GetVersionControlNode().Accept(visitor);
 
             //assert
-            var actualChild = parent.AsVersionControlNode().Children.Single();
-            actualChild.Should().NotBeSameAs(child).And.BeSameAs(swappedChild.AsVersionControlNode());
+            var actualChild = parent.GetVersionControlNode().Children.Single();
+            actualChild.Should().NotBeSameAs(child).And.BeSameAs(swappedChild.GetVersionControlNode());
             var actualGrandchild = actualChild.Children.Single();
-            actualGrandchild.Should().NotBeSameAs(grandChild).And.BeSameAs(swappedGrandchild.AsVersionControlNode());
+            actualGrandchild.Should().NotBeSameAs(grandChild).And.BeSameAs(swappedGrandchild.GetVersionControlNode());
 
             actualChild.Mutations.Should().HaveCount(2);
 
@@ -110,10 +110,10 @@ namespace VersionCommander.UnitTests
             if (parent == null || ! parent.IsUnderVersionCommand()) 
                 throw new ArgumentException("Must be not null and versioning object.", "parent");
 
-            var existingNode = parent.AsVersionControlNode();
+            var existingNode = parent.GetVersionControlNode();
             var child = _testHelper.MakeVersioning<DeepPropertyBag>(existingNode);
             var addChildToParent = new TimestampedPropertyVersionDelta(child, TestHelper.DeepNestedVersioner.SetMethod, _lastVersionNumber++);
-            parent.AsVersionControlNode().Mutations.Add(addChildToParent);
+            parent.GetVersionControlNode().Mutations.Add(addChildToParent);
             return child;
         }
     }

@@ -30,7 +30,7 @@ namespace VersionCommander.UnitTests.TestingAssists
         }
         public static PropertyInfo DeepPropsString
         {
-            get { return MethodInfoExtensions.GetPropertyInfo<DeepPropertyBag, string>(x => x.Stringey); }
+            get { return MethodInfoExtensions.GetPropertyInfo<DeepPropertyBag, string>(x => x.DeepStringProperty); }
         }
         public static PropertyInfo FlatPropsString
         {
@@ -96,7 +96,7 @@ namespace VersionCommander.UnitTests.TestingAssists
              .WithAnyArguments()
              .Returns(ProvidedFlatPropertyBag);
 
-            A.CallTo(() => ProvidedFlatPropertyBag.AsVersionControlNode())
+            A.CallTo(() => ProvidedFlatPropertyBag.GetVersionControlNode())
              .WithAnyArguments()
              .Returns(ProvidedControlNode);
 
@@ -180,7 +180,7 @@ namespace VersionCommander.UnitTests.TestingAssists
         }
         public IVersionControlledObject MakeVersioningObject(IVersionControlledObject parent)
         {
-            return MakeVersioningNodeBasedOn<TestHelperObject>(parent.AsVersionControlNode());
+            return MakeVersioningNodeBasedOn<TestHelperObject>(parent.GetVersionControlNode());
         }
         public IVersionControlledObject MakeVersioning<TSubject>(IVersionControlNode parent = null)
             where TSubject : class
@@ -190,7 +190,7 @@ namespace VersionCommander.UnitTests.TestingAssists
         public IVersionControlledObject MakeVersioning<TSubject>(IVersionControlledObject parent) 
             where TSubject : class
         {
-            return MakeVersioningNodeBasedOn<TSubject>(parent.AsVersionControlNode());
+            return MakeVersioningNodeBasedOn<TSubject>(parent.GetVersionControlNode());
         }
    
 
@@ -203,9 +203,9 @@ namespace VersionCommander.UnitTests.TestingAssists
 
             var obj = A.Fake<TSubject>(options => options.Implements(typeof(IVersionControlledObject))) as IVersionControlledObject;
 
-            A.CallTo(() => obj.AsVersionControlNode()).Returns(node);
-            A.CallTo(() => obj.AsVersionController<TSubject>()).Returns(node as IVersionController<TSubject>);
-            A.CallTo(() => obj.AsNativeObject<TSubject>()).Returns(obj as TSubject);
+            A.CallTo(() => obj.GetVersionControlNode()).Returns(node);
+            A.CallTo(() => obj.GetVersionController<TSubject>()).Returns(node as IVersionController<TSubject>);
+            A.CallTo(() => obj.GetNativeObject<TSubject>()).Returns(obj as TSubject);
 
             if (parent != null)
             {
@@ -219,10 +219,10 @@ namespace VersionCommander.UnitTests.TestingAssists
         public IVersionControlledObject ConfigureCurrentDepthCopy(IVersionControlledObject child)
         {
             var swappedChild = MakeVersioningObject();
-            A.CallTo(() => child.AsVersionControlNode().CurrentDepthCopy()).Returns(swappedChild);
+            A.CallTo(() => child.GetVersionControlNode().CurrentDepthCopy()).Returns(swappedChild);
 
-            var swappedNode = swappedChild.AsVersionControlNode();
-            var childNode = child.AsVersionControlNode();
+            var swappedNode = swappedChild.GetVersionControlNode();
+            var childNode = child.GetVersionControlNode();
 
             swappedNode.Children.AddRange(childNode.Children);
             swappedNode.Parent = childNode.Parent;

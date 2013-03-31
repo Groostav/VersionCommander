@@ -153,9 +153,9 @@ namespace VersionCommander.UnitTests
                                  DeepChild = 
                                      new DeepPropertyBag()
                                          {
-                                             Stringey = "Sigh, I wish there were a better way"
+                                             DeepStringProperty = "Sigh, I wish there were a better way"
                                          },
-                                 Stringey = "Newed"
+                                 DeepStringProperty = "Newed"
                              };
 
             var clonedViaAutomapper = (DeepPropertyBag) sample.Clone();

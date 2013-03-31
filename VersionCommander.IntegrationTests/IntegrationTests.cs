@@ -83,7 +83,7 @@ namespace VersionCommander.IntegrationTests
             sample.IntProperty.Should().Be(expectedCounty);
             sample.StringProperty.Should().Be(expectedStringey);
 
-            sample.AsVersionControlNode().Mutations.Should().HaveCount(2);
+            sample.GetVersionControlNode().Mutations.Should().HaveCount(2);
         }
 
         [Test]
@@ -98,9 +98,9 @@ namespace VersionCommander.IntegrationTests
             sample.FlatChild.Should().NotBeNull();
 
             sample.VersionCommand().Should().NotBeNull().And.BeAssignableTo<IVersionController<DeepPropertyBag>>();
-            sample.AsVersionControlNode().Should().NotBeNull().And.BeAssignableTo<IVersionControlNode>();
+            sample.GetVersionControlNode().Should().NotBeNull().And.BeAssignableTo<IVersionControlNode>();
             sample.FlatChild.VersionCommand().Should().NotBeNull().And.BeAssignableTo<IVersionController<FlatPropertyBag>>();
-            sample.FlatChild.AsVersionControlNode().Should().NotBeNull().And.BeAssignableTo<IVersionControlNode>();
+            sample.FlatChild.GetVersionControlNode().Should().NotBeNull().And.BeAssignableTo<IVersionControlNode>();
         } 
 
         [Test]
@@ -114,8 +114,8 @@ namespace VersionCommander.IntegrationTests
             sample.Should().NotBeNull();
             sample.FlatChild.Should().NotBeNull();
 
-            sample.AsVersionControlNode().Children.Single().Should().BeSameAs(sample.FlatChild.AsVersionControlNode());
-            sample.FlatChild.AsVersionControlNode().Parent.Should().BeSameAs(sample.AsVersionControlNode());
+            sample.GetVersionControlNode().Children.Single().Should().BeSameAs(sample.FlatChild.GetVersionControlNode());
+            sample.FlatChild.GetVersionControlNode().Parent.Should().BeSameAs(sample.GetVersionControlNode());
         }
         
         [Test]
@@ -141,10 +141,10 @@ namespace VersionCommander.IntegrationTests
             var timeOfConstruction = Stopwatch.GetTimestamp();
 
             sample.FlatChild.StringProperty = "ChildStringey";
-            sample.Stringey = "Parent Stringy";
+            sample.DeepStringProperty = "Parent Stringy";
 
             var copy = sample.WithoutModificationsPast(timeOfConstruction);
-            copy.Stringey.Should().BeNull();
+            copy.DeepStringProperty.Should().BeNull();
             copy.FlatChild.StringProperty.Should().BeNull();
         }        
     }
