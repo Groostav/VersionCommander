@@ -33,10 +33,7 @@ namespace VersionCommander.Implementation
             _visitorFactory = visitorFactory;
             _proxyFactory = proxyFactory;
 
-            if (existingChanges != null)
-            {
-                Mutations.AddRange(existingChanges);
-            }
+            Mutations.AddRange(existingChanges);
         }
 
         //TODO move this into the typed version controller?
@@ -209,7 +206,5 @@ namespace VersionCommander.Implementation
 
             return targetMember;
         }
-
-
     }
 }

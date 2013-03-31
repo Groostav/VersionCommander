@@ -43,16 +43,14 @@ namespace VersionCommander.UnitTests
         public void when_undoing_a_version_delta_when_all_version_deltas_are_already_undone()
         {
             //setup
-            var targetSite = new FlatPropertyBag().PropertyInfoFor(x => x.StringProperty).GetSetMethod();
-
             var visitor = new DeltaApplicationVisitor(changeType: ChangeType.Undo,
-                                                      targetSite: targetSite, 
+                                                      targetSite: TestHelper.FlatPropsString.SetMethod, 
                                                       searchWholeTree: true);
 
             _testHelper.ProvidedDeltaApplicationVisitor = visitor;
             var node = _testHelper.MakeVersionControlNodeWithChildren();
-            node.Mutations.AddRange(new TimestampedPropertyVersionDelta("1", targetSite, 1L, isActive:false),
-                                    new TimestampedPropertyVersionDelta("2", targetSite, 2L, isActive:false));
+            node.Mutations.AddRange(new TimestampedPropertyVersionDelta("1", TestHelper.FlatPropsString.SetMethod, 1L, isActive: false),
+                                    new TimestampedPropertyVersionDelta("2", TestHelper.FlatPropsString.SetMethod, 2L, isActive: false));
 
             //act
             TestDelegate act = () => node.Accept(visitor);
@@ -73,9 +71,9 @@ namespace VersionCommander.UnitTests
             var node = _testHelper.MakeVersionControlNodeWithChildren();
 
             var targetSite = new FlatPropertyBag().PropertyInfoFor(x => x.StringProperty).GetSetMethod();
-            var targetActiveDelta = new TimestampedPropertyVersionDelta("1", targetSite, 1L, isActive: true);
-            node.Mutations.AddRange(targetActiveDelta,
-                                    new TimestampedPropertyVersionDelta("2", targetSite, 2L, isActive: false));
+            TimestampedPropertyVersionDelta targetActiveDelta;
+            node.Mutations.AddRange(targetActiveDelta = new TimestampedPropertyVersionDelta("1", targetSite, 1L, isActive: true),
+                                                        new TimestampedPropertyVersionDelta("2", targetSite, 2L, isActive: false));
 
             //act
             node.Accept(visitor);
@@ -108,15 +106,13 @@ namespace VersionCommander.UnitTests
         public void when_redoing_a_version_delta_that_has_only_active_deltas()
         {
             //setup
-            var targetSite = new FlatPropertyBag().PropertyInfoFor(x => x.StringProperty).GetSetMethod();
-
             var visitor = new DeltaApplicationVisitor(changeType: ChangeType.Redo,
-                                                      targetSite: targetSite, 
+                                                      targetSite: TestHelper.FlatPropsString.SetMethod, 
                                                       searchWholeTree: true);
 
             var node = _testHelper.MakeVersionControlNodeWithChildren();
-            node.Mutations.AddRange(new TimestampedPropertyVersionDelta("1", targetSite, 1L, isActive:true),
-                                    new TimestampedPropertyVersionDelta("2", targetSite, 2L, isActive:true));
+            node.Mutations.AddRange(new TimestampedPropertyVersionDelta("1", TestHelper.FlatPropsString.SetMethod, 1L, isActive: true),
+                                    new TimestampedPropertyVersionDelta("2", TestHelper.FlatPropsString.SetMethod, 2L, isActive: true));
 
             //act
             TestDelegate act = () => node.Accept(visitor);
@@ -129,15 +125,14 @@ namespace VersionCommander.UnitTests
         public void when_redoing_a_specific_available_assignment()
         {
             //setup
-            var targetSite = new FlatPropertyBag().PropertyInfoFor(x => x.StringProperty).GetSetMethod();
             var visitor = new DeltaApplicationVisitor(changeType: ChangeType.Redo,
-                                                      targetSite: targetSite,
+                                                      targetSite: TestHelper.FlatPropsString.SetMethod,
                                                       searchWholeTree: false);
 
             var node = _testHelper.MakeVersionControlNodeWithChildren();
 
-            var targetActiveDelta = new TimestampedPropertyVersionDelta("2", targetSite, 2L, isActive: false);
-            node.Mutations.AddRange(new TimestampedPropertyVersionDelta("1", targetSite, 1L, isActive: true),
+            var targetActiveDelta = new TimestampedPropertyVersionDelta("2", TestHelper.FlatPropsString.SetMethod, 2L, isActive: false);
+            node.Mutations.AddRange(new TimestampedPropertyVersionDelta("1", TestHelper.FlatPropsString.SetMethod, 1L, isActive: true),
                                     targetActiveDelta);
                                    
             //act
@@ -152,15 +147,13 @@ namespace VersionCommander.UnitTests
         public void when_undoing_assignment_to_parent_when_assignment_only_available_on_children()
         {
             //setup
-            var targetSite = new FlatPropertyBag().PropertyInfoFor(x => x.StringProperty).GetSetMethod();
-
             var visitor = new DeltaApplicationVisitor(changeType: ChangeType.Undo,
-                                                      targetSite: targetSite, 
+                                                      targetSite: TestHelper.FlatPropsString.SetMethod, 
                                                       searchWholeTree: false);
 
             var node = _testHelper.MakeVersionControlNodeWithChildren();
             A.CallTo(() => node.Children.First().Mutations)
-             .Returns(new[]{new TimestampedPropertyVersionDelta("1", targetSite, 1L, isActive: true)});
+             .Returns(new[] { new TimestampedPropertyVersionDelta("1", TestHelper.FlatPropsString.SetMethod, 1L, isActive: true) });
 
             //act
             TestDelegate act = () => node.Accept(visitor);
