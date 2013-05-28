@@ -71,16 +71,15 @@ namespace VersionCommander.UnitTests
             var node = _testHelper.MakeVersionControlNodeWithChildren();
 
             var targetSite = new FlatPropertyBag().PropertyInfoFor(x => x.StringProperty).GetSetMethod();
-            TimestampedPropertyVersionDelta targetActiveDelta;
-            node.Mutations.AddRange(targetActiveDelta = new TimestampedPropertyVersionDelta("1", targetSite, 1L, isActive: true),
-                                                        new TimestampedPropertyVersionDelta("2", targetSite, 2L, isActive: false));
+
+            node.Mutations.AddRange(new TimestampedPropertyVersionDelta("1", targetSite, 1L, isActive: true),
+                                    new TimestampedPropertyVersionDelta("2", targetSite, 2L, isActive: false));
 
             //act
             node.Accept(visitor);
 
             //assert
-            targetActiveDelta.IsActive.Should().BeFalse();
-            node.Mutations.Except(new[] {targetActiveDelta}).Should().OnlyContain(mutation => ! mutation.IsActive);
+            node.Mutations.Should().OnlyContain(mutation => ! mutation.IsActive);
         }        
 
         //not sure how I feel about copy-pasting tests based on nearly identical behavior.

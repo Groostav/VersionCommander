@@ -66,6 +66,7 @@
     <Compile Include="ProfilingEntryPoint.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestingBuusMementoPackage.cs" />
+    <Compile Include="usingDotNetEvents.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -46,6 +46,11 @@ namespace VersionCommander.Implementation.Extensions
             }
         }
 
+        public static IEnumerable<TElement> Union<TElement>(this IEnumerable<TElement> source, TElement newMember)
+        {
+            return source.Union(new[] {newMember});
+        }
+            
         [DebuggerStepThrough]
         public static void ForEach<TElement>(this IEnumerable<TElement> source, Action<TElement> action)
         {
@@ -83,6 +88,7 @@ namespace VersionCommander.Implementation.Extensions
         {
             if(source == null) throw new ArgumentNullException("source");
 
+            //cant do Count == 1 as Count() is O(n) on non collection enumerables. 
             return source.Any() && ! source.Skip(1).Any();
         }
 

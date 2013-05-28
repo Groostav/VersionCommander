@@ -46,8 +46,9 @@ namespace VersionCommander.Implementation
         public static void RecursiveAccept(IVersionControlNode hostingNode, IVersionControlTreeVisitor visitor)
         {
             visitor.OnEntry(hostingNode);
-            //I have a concurrency problem. You may not muitate children while i foreach through it.
+            // ReSharper disable ForCanBeConvertedToForeach -- might cause a concurrency issue. TODO
             for (var i = 0; i < hostingNode.Children.Count; i++)
+            // ReSharper restore ForCanBeConvertedToForeach
             {
                 hostingNode.Children[i].RecursiveAccept(visitor);
             }

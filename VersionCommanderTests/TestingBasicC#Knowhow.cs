@@ -180,7 +180,7 @@ namespace VersionCommander.UnitTests
         }
 
         [Test]
-        public void when_calling_equals_on_delegates()
+        public void when_calling_equals_on_Action_Func_and_Lambda_delegates()
         {
             var func = new Func<int>(() => 1);
 
@@ -193,16 +193,49 @@ namespace VersionCommander.UnitTests
             (func as MulticastDelegate).Equals(new Func<int>(() => 1) as MulticastDelegate).Should().BeFalse();
             //so I guess it boils down to lambdas, and how LambdaExpression.Compile() works. 
 
-            var action = new Action(when_calling_equals_on_delegates);
-            action.Should().Be(new Action(when_calling_equals_on_delegates));
+            var action = new Action(when_calling_equals_on_Action_Func_and_Lambda_delegates);
+            action.Should().Be(new Action(when_calling_equals_on_Action_Func_and_Lambda_delegates));
             //so when you create a direct delegate, everything goes smoothly: the invocation lists are compared as as you'd expect,
 
             //but when you use a lambda...
-            action.Should().NotBe(new Action(() => when_calling_equals_on_delegates()));
+                // ReSharper disable ConvertClosureToMethodGroup -- I specifically want that empty lambda for this test.
+            action.Should().NotBe(new Action(() => when_calling_equals_on_Action_Func_and_Lambda_delegates()));
+                // ReSharper restore ConvertClosureToMethodGroup
             //you get unequality. This is where the iffy behavior mentioned by the MS MVP kick in: if the compiler realizes that this lambda is identical
             //with another lambda somewhere else, it will use the same generated function for each lambda, and thus equality between the two will return true,
             //as they'll both be multicast delegates with the same invocation list.                
         }
+        //ok, so I wrote the above before I knew enough about the delegate keyword, lets test some of that knowledge (also remind
+        //myself of its syntax)
+        [Test]
+        public void when_calling_equals_on_proper_delegates()
+        {
+//            Delegate lambda = new Delegate(delegate(int x) { return 4; });
+            //err... I dont actually know how I can create a delegate as a variable, I guess I'll have to use a field.
+
+            testingDelegate firstDelegate = when_calling_equals_on_proper_delegates;
+            testingDelegate anotherDelegate = when_calling_equals_on_proper_delegates;
+
+            firstDelegate.Should().Be(anotherDelegate);
+            firstDelegate.Should().NotBeSameAs(anotherDelegate);
+
+            //yeah, so its giving us a new object with the same invocation list.
+
+                // ReSharper disable ConvertClosureToMethodGroup -- intentional for test, seeing if theres clever deep-equals testing
+            testingDelegate closingDelegate = () => when_calling_equals_on_proper_delegates();
+                // ReSharper restore ConvertClosureToMethodGroup
+
+            firstDelegate.Should().NotBe(closingDelegate);
+                //the lambda is getting compiled into a new object which is getting put on closingDelegate's invocation list.
+                    //that lambda itself contains when_calling... on its invocation list, thus the two are not equal though they have the same effect.
+                //intrestingly, under the debugger the invocation list has count 0 and is null, but rather simply has a "target",
+                //so I'm using invocation list loosly, to mean "what this thing will invoke" rather than whatever the implemetation means.
+        }
+
+        // ReSharper disable InconsistentNaming -- camel case because i just got back from java land
+        private delegate void testingDelegate();
+            // ReSharper restore InconsistentNaming
+        
 
         private class IntBox
         {
@@ -309,11 +342,8 @@ namespace VersionCommander.UnitTests
 
             mostDerrived.Invocations.Should().ContainInOrder(new[]
                                                                  {
-                                                                     typeof (
-                                                                         FurtherDerrivedOverridingVirtualProperty)
-                                                                         .Name,
-                                                                     typeof (DerrivedOverridingVirtualProperty).Name
-                                                                     ,
+                                                                     typeof (FurtherDerrivedOverridingVirtualProperty).Name,
+                                                                     typeof (DerrivedOverridingVirtualProperty).Name,
                                                                      typeof (ClassWithVirtualProperty).Name
                                                                  });
             //so overrides are intrinsically virtual, and any overriding member can itself be overriden nicely.
@@ -321,6 +351,7 @@ namespace VersionCommander.UnitTests
 
         public static class EqualsCallMe
         {
+            //yes this is a Carly Rae Jepsen reference, deal with it.
             public static bool Maybe { get; set; }
         }
 
@@ -388,8 +419,7 @@ namespace VersionCommander.UnitTests
             var other = new EmptyOverridingTypedEquality();
             staticallyImplementation.Equals(other).Should().BeTrue();
             EmptyOverridingTypedEquality.EqualsLog.Should()
-                                        .ContainSingle(item => item == string.Format(EmptyOverridingTypedEquality.
-                                                                                         CalledTypedEqualsOnThisTypeOtherTemplate,
+                                        .ContainSingle(item => item == string.Format(EmptyOverridingTypedEquality.CalledTypedEqualsOnThisTypeOtherTemplate,
                                                                                      staticallyImplementation.Id,
                                                                                      other.Id));
         }
@@ -404,14 +434,12 @@ namespace VersionCommander.UnitTests
                 return 0;
             }
 
-            public static bool operator ==(EmptyOverridingEverythingItCan left, EmptyOverridingEverythingItCan right
-                )
+            public static bool operator ==(EmptyOverridingEverythingItCan left, EmptyOverridingEverythingItCan right)
             {
                 return Equals(left, right);
             }
 
-            public static bool operator !=(EmptyOverridingEverythingItCan left, EmptyOverridingEverythingItCan right
-                )
+            public static bool operator !=(EmptyOverridingEverythingItCan left, EmptyOverridingEverythingItCan right)
             {
                 return !Equals(left, right);
             }
@@ -455,23 +483,17 @@ namespace VersionCommander.UnitTests
                                .Should()
                                .BeTrue("because the equals call was intercepted via the V-Table");
             EmptyOverridingTypedEquality.EqualsLog.Should()
-                                        .ContainSingle(item => item == string.Format(EmptyOverridingEverythingItCan.
-                                                                                         CalledUntypedEqualsOnThisTypeOtherTemplate,
-                                                                                     staticallyInterface
-                                                                                         .As
-                                                                                         <
-                                                                                         EmptyOverridingTypedEquality
-                                                                                         >().Id, other.Id));
+                                        .ContainSingle(item => item == string.Format(EmptyOverridingEverythingItCan.CalledUntypedEqualsOnThisTypeOtherTemplate,
+                                                                                     staticallyInterface.As<EmptyOverridingTypedEquality>().Id, 
+                                                                                     other.Id));
 
             var staticallyImplementation = staticallyInterface as EmptyOverridingEverythingItCan;
             other = new EmptyOverridingEverythingItCan();
             staticallyImplementation.Equals(other)
                                     .Should()
-                                    .BeTrue(
-                                        "because the equals call was intercepted via the IEquality<Interface> overload");
+                                    .BeTrue("because the equals call was intercepted via the IEquality<Interface> overload");
             EmptyOverridingTypedEquality.EqualsLog.Should()
-                                        .ContainSingle(item => item == string.Format(EmptyOverridingTypedEquality.
-                                                                                         CalledTypedEqualsOnThisTypeOtherTemplate,
+                                        .ContainSingle(item => item == string.Format(EmptyOverridingTypedEquality.CalledTypedEqualsOnThisTypeOtherTemplate,
                                                                                      staticallyImplementation.Id,
                                                                                      other.Id));
         }
@@ -722,7 +744,59 @@ namespace VersionCommander.UnitTests
             fake.Parent.Should().BeNull();
         }
 
+        public class EventBus
+        {
+            public event Action<SubscriberGainedEvent> SubscriberGained;            
+
+            public virtual void publish(SubscriberGainedEvent @event)
+            {
+                SubscriberGained(@event);
+            }
+        }
+
+        [Test]
+        public void using_a_dot_net_event()
+        {
+            var bus = new EventBus();
+
+            bus.SubscriberGained += updateMyStuff;
+
+            var @event = new SubscriberGainedEvent();
+            bus.publish(@event);
+
+            @event.updatedMyStuff.Should().BeTrue();
+
+        }
+
+        public void updateMyStuff(SubscriberGainedEvent @event)
+        {
+            @event.updatedMyStuff = true;
+        }
+
+        //this really is quite a thin layer on top of delegates.
+        //"event" supplies the slightist bit of syntactic sugar on top of "MulticastDelegate".
+        //so in my MVC app for PDOL, what that would mean is that each controller would have to 
+        //manually subscribe to the events its intrested in, (or I write a utility that reflects 
+        //and gets you the ones you want)
+            //but who wants to reflect
+        //so in .net land, dispite .net having a core understanding of events, you still really
+        //want to use a library.
+        //on the enterprise team at IQ we had the problem of parenting event aggregators:
+            //some events were cross module, some events were cross program, some didnt even leave a viewModel.
+        //does this help?
+            //it would allow you to localize alot easier, because an event bus would have exactly the events it needs
+            //thats alot of custom code.
+        //yeah, and it sort've defeats one of the primary purposes of an event in my eyes, the event bus
+        //has to know what specific events its subscribers are intrested in, as opposed to the totally generic
+        //publish(TEvent event)
+        //verdict: dont like, dont see it as very helpful for the apps that I've worked on,
+            //but i am willing to concede that I might just not be looking at it correctly. Delegates are not simple,
+            //and thinking with delegates isnt easy.
+                //if it was we would've gotten linq ALOT SOONER THAN WE DID.
+                    //god I love linq. Java making me so mad. Java 8 delayed. Again.
     }
+
+    public class SubscriberGainedEvent : EventArgs { public bool updatedMyStuff { get; set; } }
 
     //extension methods in non-nested classes only huh? I'd like to hear the rationale behind that.
     public static class CovariantClassExtensions

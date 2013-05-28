@@ -17,10 +17,6 @@ namespace VersionCommander.Implementation.Cloners
             {
                 return (TCloned)targetAsCloneable.Clone();
             }
-//            else if (target.GetType().HasCopyConstructor())
-//            {
-//                return target.GetType().GetCopyConstructor()
-//            }
             else
             {
                 return UseAutoMapper(target);
@@ -45,10 +41,12 @@ namespace VersionCommander.Implementation.Cloners
         {
             if(neededAsMappable == null) throw new ArgumentNullException("neededAsMappable");
 
-            if (Mapper.FindTypeMapFor(neededAsMappable, neededAsMappable) == null)
+            if (Mapper.FindTypeMapFor(neededAsMappable, neededAsMappable) != null)
             {
-                Mapper.CreateMap(neededAsMappable, neededAsMappable);
+                return;
             }
+
+            Mapper.CreateMap(neededAsMappable, neededAsMappable);
 
             var typesToMap = neededAsMappable.GetProperties().Select(prop => prop.PropertyType)
                                                              .Where(type => ! type.IsPrimitive);

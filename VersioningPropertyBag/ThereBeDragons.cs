@@ -17,9 +17,10 @@ namespace VersionCommander.Implementation
     }
 
     /// <summary>
-    /// Describes a class that has behavior that is so simply it isnt worth testing and/or is used by multiple 
+    /// Describes a class that has behavior that is so simple it isnt worth testing and/or is used by multiple 
     /// test suites without being stubbed/mocked.
     /// </summary>
+    [AttributeUsage(AttributeTargets.Class)]
     public class Simpleton : Attribute
     {
         private readonly string _description;
