@@ -3,7 +3,7 @@ using VersionCommander.Implementation.Exceptions;
 
 namespace VersionCommander.Implementation.Extensions
 {
-    public static class VersionablePropertyBagExtensions
+    public static class VersionableExtensionsImplementation
     {
         public static IVersionControlNode GetVersionControlNode<TSubject>(this TSubject node)
         {

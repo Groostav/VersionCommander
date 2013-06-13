@@ -7,7 +7,7 @@ using Memento;
 namespace VersionCommander.IntegrationTests
 {
     [TestFixture]
-    //hmm, poking around in this package, moral of the story: Yo dawg Events are pretty nice and 
+    //hmm, poking around in this package, moral of the story: Yo dawg Events are pretty nice 
     public class TestingBuusMementoPackage
     {
         [Test]

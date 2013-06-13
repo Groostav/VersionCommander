@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Diagnostics;
 using FluentAssertions;
 using NUnit.Framework;
@@ -27,20 +28,21 @@ namespace VersionCommander.IntegrationTests
         public void when_asking_for_version_just_post_construction_should_get_default_object()
         {
             var propertyBag = New.Versioning<FlatPropertyBag>();
-
             var postConstruction = Stopwatch.GetTimestamp();
-
             var given = "new StringProperty!";
 
             propertyBag.StringProperty = given;
+            var rolledBackBag = propertyBag.WithoutModificationsPast(postConstruction);
 
-            Assert.That(propertyBag.WithoutModificationsPast(postConstruction).StringProperty, Is.Null);
+            Assert.That(rolledBackBag.StringProperty, Is.Null);
+            Assert.That(propertyBag.StringProperty, Is.EqualTo(given));
         }
 
         [Test]
         public void when_performing_equals_on_checked_in_objects()
         {
             var propertyBag = New.Versioning<FlatPropertyBag>();
+            Debug.Assert(propertyBag is IEquatable<FlatPropertyBag>);
             var other = propertyBag;
 
             Assert.That(other, Is.EqualTo(propertyBag));

@@ -7,7 +7,7 @@ using VersionCommander.Implementation;
 namespace VersionCommander.UnitTests.TestingAssists
 {
     [DebuggerDisplay("DeepPropertyBag : StringProperty = {StringProperty}")]
-    public class DeepPropertyBag : ICloneable,  IEquatable<DeepPropertyBag>, IVersionablePropertyBag
+    public class DeepPropertyBag : ICloneable,  IEquatable<DeepPropertyBag>, IVersionable
     {
         static DeepPropertyBag()
         {

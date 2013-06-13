@@ -11,7 +11,7 @@ namespace VersionCommander.Implementation
 {
     [ThereBeDragons("No tests, no uses, methods that get mad")]
     public class VersioningList<TElement> : VersionControlNodeBase, IList<TElement>, IVersionControlNode, ICloneable
-        where TElement : IVersionablePropertyBag
+        where TElement : IVersionable
     {
         private readonly MethodInfo AddMethod =
             MethodInfoExtensions.GetMethodInfo<IList<TElement>>(list => list.Add(default(TElement)));
@@ -25,8 +25,8 @@ namespace VersionCommander.Implementation
         private readonly MethodInfo IndexSetMethod =
             MethodInfoExtensions.GetPropertyInfo<IList<TElement>, TElement>(list => list[0]).GetSetMethod();
 
-        [ThereBeDragons("this is broken, this isnt a property delta.")] private readonly
-            List<TimestampedPropertyVersionDelta> _versionDeltas;
+        [ThereBeDragons("this is broken, this isnt a property delta.")] 
+        private readonly List<TimestampedPropertyVersionDelta> _versionDeltas;
 
         private readonly IList<TElement> _backingList;
 
@@ -181,14 +181,16 @@ namespace VersionCommander.Implementation
         private void TryRemoveFromChildren(TElement item)
         {
             var controller = item.GetVersionControlNode();
-            if (controller != null)
+            if (controller == null)
             {
-                var wasRemoved = Children.Remove(controller);
-                if (wasRemoved)
-                {
-                    Debug.Assert(controller.Parent == this);
-                    controller.Parent = null;
-                }
+                return;
+            }
+
+            var wasRemoved = Children.Remove(controller);
+            if (wasRemoved)
+            {
+                Debug.Assert(controller.Parent == this);
+                controller.Parent = null;
             }
         }
     }

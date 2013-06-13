@@ -40,7 +40,7 @@ namespace VersionCommander.Implementation
         }
 
         public IList<TSubject> VersioningList<TSubject>()
-            where TSubject : IVersionablePropertyBag
+            where TSubject : IVersionable
         {
             return new VersioningList<TSubject>();
         }

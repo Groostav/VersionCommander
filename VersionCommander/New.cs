@@ -15,7 +15,7 @@ namespace VersionCommander
         }
 
         public static IList<TSubject> VersioningList<TSubject>()
-            where TSubject : IVersionablePropertyBag
+            where TSubject : IVersionable
         {
             return ProxyFactory.VersioningList<TSubject>();
         }

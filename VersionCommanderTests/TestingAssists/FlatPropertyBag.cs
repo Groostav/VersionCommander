@@ -6,7 +6,7 @@ using VersionCommander.Implementation;
 namespace VersionCommander.UnitTests.TestingAssists
 {
     [DebuggerDisplay("FlatPropertyBag : StringProperty = {StringProperty}")]
-    public class FlatPropertyBag : ICloneable, IEquatable<FlatPropertyBag>, IVersionablePropertyBag
+    public class FlatPropertyBag : ICloneable, IEquatable<FlatPropertyBag>, IVersionable
     {
         public virtual string StringProperty { get; set; }
         public virtual int IntProperty { get; set; }

@@ -13,10 +13,10 @@ namespace VersionCommander.Implementation.Visitors
 
         public override void OnEntry(IVersionControlNode controlNode)
         {
-            var relatedMutations = controlNode.Mutations.Where(mutation => mutation.TimeStamp > _targetTime).ToArray();
+            var relatedMutations = controlNode.Mutations.Where(mutation => mutation.TimeStamp > _targetTime);
             foreach (var mutation in relatedMutations)
             {
-                controlNode.Mutations.Remove(mutation);
+                mutation.IsActive = false;
             }
         }
     }
